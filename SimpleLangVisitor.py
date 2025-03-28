@@ -64,5 +64,10 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#FloatNumber.
+    def visitFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
+        return self.visitChildren(ctx)
+
+
 
 del SimpleLangParser
