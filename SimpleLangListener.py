@@ -107,5 +107,14 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#FloatNumber.
+    def enterFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#FloatNumber.
+    def exitFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
+        pass
+
+
 
 del SimpleLangParser
