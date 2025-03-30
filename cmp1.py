@@ -26,6 +26,14 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         elif ctx.FLOAT():
             llvm_type = ir.FloatType()  # 'float' dla typu float
             initializer = ir.Constant(llvm_type, float(ctx.FLOAT().getText()))
+            
+        # Obsługa typu bool
+        elif ctx.boolean_expression():
+            llvm_type = ir.IntType(1)  # 'i1' dla typu bool
+            print(f"Boolean expression: {ctx.boolean_expression().getText()}")
+            # bool_value = ctx.boolean_expression().getText()
+            # initializer = ir.Constant(llvm_type, 1 if bool_value == "true" else 0)
+            initializer = self.visitBooleanExpression(ctx.boolean_expression())
 
         if llvm_type is None or initializer is None:
             raise ValueError(f"Unsupported type for variable: {var_name}")
@@ -40,7 +48,12 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
     def visitAssignment(self, ctx):
         var_name = ctx.ID().getText()
-        var_value = self.visitExpression(ctx.expression())  # Obsługa wyrażenia
+        if ctx.expression():
+            var_value = self.visitExpression(ctx.expression())  # Obsługa wyrażenia
+        elif ctx.boolean_expression():
+            var_value = self.visitBooleanExpression(ctx.boolean_expression())  # Obsługa wyrażenia logicznego
+        else:
+            raise ValueError("Invalid assignment")
 
         # Sprawdzenie, czy zmienna została zadeklarowana
         if var_name not in self.symbol_table:
@@ -64,6 +77,11 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             block = dummy_func.append_basic_block(name="entry")
             builder = ir.IRBuilder(block)
             var_value = builder.sitofp(var_value, ir.FloatType())  # Rzutowanie int -> float
+        elif isinstance(global_var.type.pointee, ir.IntType) and global_var.type.pointee.width == 1:  # Typ bool
+            if isinstance(var_value.type, ir.IntType) and var_value.type.width == 1:
+                pass  # Typy zgodne (bool)
+            else:
+                raise ValueError(f"Type mismatch for variable: {var_name}")
         else:
             raise ValueError(f"Type mismatch for variable: {var_name}")
 
@@ -180,6 +198,60 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 raise ValueError(f"Type mismatch in binary operation: {op}")
         else:
             raise ValueError("Invalid expression")
+        
+    def visitBooleanExpression(self, ctx):
+        if ctx.getChildCount() == 1:  # Pojedynczy element (wartość logiczna lub zmienna)
+            text = ctx.getText()
+            if text == "true":
+                return ir.Constant(ir.IntType(1), 1)
+            elif text == "false":
+                return ir.Constant(ir.IntType(1), 0)
+            elif text in self.symbol_table:  # Jeśli to zmienna
+                var_name = text
+                global_var = self.symbol_table[var_name]
+                unique_func_name = f"dummy_func_{self.function_counter}"
+                self.function_counter += 1
+                dummy_func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=unique_func_name)
+                block = dummy_func.append_basic_block(name="entry")
+                builder = ir.IRBuilder(block)
+                return builder.load(global_var)
+            else:
+                raise ValueError(f"Unknown variable or invalid boolean expression: {text}")
+        elif ctx.getChildCount() == 3:  # Wyrażenie logiczne binarne
+            if ctx.getChildCount() == 3 and ctx.getChild(0).getText() == "(" and ctx.getChild(2).getText() == ")":  # Nawiasy
+            # Obsługa nawiasów
+                return self.visitBooleanExpression(ctx.boolean_expression())  # Poprawne wywołanie dla nawiasów
+            else:
+                left = self.visitBooleanExpression(ctx.boolean_expression(0))
+                right = self.visitBooleanExpression(ctx.boolean_expression(1))
+                op = ctx.getChild(1).getText()  # Pobierz operator
+
+                unique_func_name = f"dummy_func_{self.function_counter}"
+                self.function_counter += 1
+                dummy_func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=unique_func_name)
+                block = dummy_func.append_basic_block(name="entry")
+                builder = ir.IRBuilder(block)
+
+                # Poprawna obsługa operatorów logicznych
+                print(f"Left operand: {left}, Right operand: {right}, Operator: {op}")
+                if op == "AND":
+                    return builder.and_(left, right)
+                elif op == "OR":
+                    return builder.or_(left, right)
+                elif op == "XOR":
+                    return builder.xor(left, right)
+                else:
+                    raise ValueError(f"Unsupported boolean operator: {op}")
+        elif ctx.getChildCount() == 2:  # Negacja logiczna
+            operand = self.visitBooleanExpression(ctx.boolean_expression())
+            unique_func_name = f"dummy_func_{self.function_counter}"
+            self.function_counter += 1
+            dummy_func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=unique_func_name)
+            block = dummy_func.append_basic_block(name="entry")
+            builder = ir.IRBuilder(block)
+            return builder.not_(operand)
+        else:
+            raise ValueError("Invalid boolean expression")
     
     def visitProgram(self, ctx):
         for statement in ctx.statement():
@@ -200,6 +272,10 @@ def compile(input_text):
     stream = CommonTokenStream(lexer)
     parser = SimpleLangParser(stream)
     tree = parser.program()
+    
+     # Drukowanie drzewa parsowania
+    print("Parse Tree:")
+    print(tree.toStringTree(recog=parser))  # Wypisuje drzewo parsowania
 
     visitor = SimpleLangIRVisitor()
     llvm_module = visitor.visitProgram(tree)
@@ -208,9 +284,8 @@ def compile(input_text):
 
 if __name__ == '__main__':
     input_text = """
-    float x = 2.5;
-    int y = 5;
-    x = 1.0 + x;
+    bool c = (true AND false) OR true;
+    
     """
     llvm_module = compile(input_text)
 
