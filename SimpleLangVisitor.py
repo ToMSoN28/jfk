@@ -69,5 +69,30 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#BoolNegation.
+    def visitBoolNegation(self, ctx:SimpleLangParser.BoolNegationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#BoolBinaryOp.
+    def visitBoolBinaryOp(self, ctx:SimpleLangParser.BoolBinaryOpContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#BoolValue.
+    def visitBoolValue(self, ctx:SimpleLangParser.BoolValueContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#BoolVariable.
+    def visitBoolVariable(self, ctx:SimpleLangParser.BoolVariableContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#BoolParens.
+    def visitBoolParens(self, ctx:SimpleLangParser.BoolParensContext):
+        return self.visitChildren(ctx)
+
+
 
 del SimpleLangParser

@@ -116,5 +116,50 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#BoolNegation.
+    def enterBoolNegation(self, ctx:SimpleLangParser.BoolNegationContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#BoolNegation.
+    def exitBoolNegation(self, ctx:SimpleLangParser.BoolNegationContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#BoolBinaryOp.
+    def enterBoolBinaryOp(self, ctx:SimpleLangParser.BoolBinaryOpContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#BoolBinaryOp.
+    def exitBoolBinaryOp(self, ctx:SimpleLangParser.BoolBinaryOpContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#BoolValue.
+    def enterBoolValue(self, ctx:SimpleLangParser.BoolValueContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#BoolValue.
+    def exitBoolValue(self, ctx:SimpleLangParser.BoolValueContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#BoolVariable.
+    def enterBoolVariable(self, ctx:SimpleLangParser.BoolVariableContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#BoolVariable.
+    def exitBoolVariable(self, ctx:SimpleLangParser.BoolVariableContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#BoolParens.
+    def enterBoolParens(self, ctx:SimpleLangParser.BoolParensContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#BoolParens.
+    def exitBoolParens(self, ctx:SimpleLangParser.BoolParensContext):
+        pass
+
+
 
 del SimpleLangParser
