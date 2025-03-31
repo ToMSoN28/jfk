@@ -12,6 +12,21 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         self.symbol_table = {}
         self.function_counter = 0
         self.generated_funcs = []
+        self.printf = None
+        self._declare_printf()
+
+    def _declare_printf(self):
+        voidptr_ty = ir.IntType(8).as_pointer()
+        printf_ty = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg=True)
+        self.printf = ir.Function(self.module, printf_ty, name="printf")
+
+    def _create_global_format_str(self, fmt):
+        fmt_bytes = bytearray(fmt.encode("utf8")) + b"\00"
+        global_fmt = ir.GlobalVariable(self.module, ir.ArrayType(ir.IntType(8), len(fmt_bytes)), name=f".fmt{self.function_counter}")
+        global_fmt.linkage = 'internal'
+        global_fmt.global_constant = True
+        global_fmt.initializer = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt_bytes)), fmt_bytes)
+        return global_fmt
 
     def visitVariable_declaration(self, ctx):
         var_name = ctx.ID().getText()
@@ -67,7 +82,11 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             self.generated_funcs.append(func.name)
             block = func.append_basic_block(name="entry")
             builder = ir.IRBuilder(block)
-            _ = builder.load(global_var)
+            value = builder.load(global_var)
+
+            fmt_var = self._create_global_format_str("%d\n")
+            fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
+            builder.call(self.printf, [fmt_ptr, value])
             builder.ret_void()
 
     def visitExpression(self, ctx):
@@ -183,6 +202,7 @@ if __name__ == '__main__':
     input_text = """
     bool c = (true AND false) OR true;
     int a = 10;
+    print(a);
     a = 20;
     print(a);
     """
