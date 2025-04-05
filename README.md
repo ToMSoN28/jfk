@@ -12,6 +12,6 @@ Study project - own compilator
 ## TODO
 * dalcaration of int, float equation
 
-##Repair
+## Repair
 * writing from screan (only int)
 * writing from screan (float, bool)
