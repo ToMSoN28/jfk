@@ -122,14 +122,17 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             if left.type != right.type:
                 raise ValueError(f"Type mismatch in expression: {left.type} vs {right.type}")
 
+            is_int = isinstance(left.type, ir.IntType)
+            is_float = isinstance(left.type, ir.FloatType)
+
             if op == '+':
-                return self.current_builder.add(left, right)
+                return self.current_builder.add(left, right) if is_int else self.current_builder.fadd(left, right)
             elif op == '-':
-                return self.current_builder.sub(left, right)
+                return self.current_builder.sub(left, right) if is_int else self.current_builder.fsub(left, right)
             elif op == '*':
-                return self.current_builder.mul(left, right)
+                return self.current_builder.mul(left, right) if is_int else self.current_builder.fmul(left, right)
             elif op == '/':
-                return self.current_builder.sdiv(left, right) if isinstance(left.type, ir.IntType) else self.current_builder.fdiv(left, right)
+                return self.current_builder.sdiv(left, right) if is_int else self.current_builder.fdiv(left, right)
             else:
                 raise ValueError(f"Unsupported binary operator: {op}")
 
@@ -217,8 +220,8 @@ def compile(input_text):
 if __name__ == '__main__':
     input_text = """
     float a = 10.23;
-    float b = 20.89;
-    float c = 0.0;
+    int b = 20;
+    float c = 0;
     c = a + b;
     print(c);
     """

@@ -12,7 +12,7 @@ define void @"dummy_func_0"()
 entry:
   %".2" = load float, float* @"a"
   %".3" = load float, float* @"b"
-  %".4" = add float %".2", %".3"
+  %".4" = fadd float %".2", %".3"
   store float %".4", float* @"c"
   ret void
 }
