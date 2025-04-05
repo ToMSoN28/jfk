@@ -39,33 +39,53 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#Variable.
-    def visitVariable(self, ctx:SimpleLangParser.VariableContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by SimpleLangParser#Number.
     def visitNumber(self, ctx:SimpleLangParser.NumberContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#MulDiv.
-    def visitMulDiv(self, ctx:SimpleLangParser.MulDivContext):
+    # Visit a parse tree produced by SimpleLangParser#MulDivInt.
+    def visitMulDivInt(self, ctx:SimpleLangParser.MulDivIntContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#AddSub.
-    def visitAddSub(self, ctx:SimpleLangParser.AddSubContext):
+    # Visit a parse tree produced by SimpleLangParser#AddSubInt.
+    def visitAddSubInt(self, ctx:SimpleLangParser.AddSubIntContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#Parens.
-    def visitParens(self, ctx:SimpleLangParser.ParensContext):
+    # Visit a parse tree produced by SimpleLangParser#VariableInt.
+    def visitVariableInt(self, ctx:SimpleLangParser.VariableIntContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#ParensInt.
+    def visitParensInt(self, ctx:SimpleLangParser.ParensIntContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#ParensFloat.
+    def visitParensFloat(self, ctx:SimpleLangParser.ParensFloatContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#AddSubFloat.
+    def visitAddSubFloat(self, ctx:SimpleLangParser.AddSubFloatContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#VariableFloat.
+    def visitVariableFloat(self, ctx:SimpleLangParser.VariableFloatContext):
         return self.visitChildren(ctx)
 
 
     # Visit a parse tree produced by SimpleLangParser#FloatNumber.
     def visitFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#MulDivFloat.
+    def visitMulDivFloat(self, ctx:SimpleLangParser.MulDivFloatContext):
         return self.visitChildren(ctx)
 
 

@@ -8,23 +8,30 @@ statement: variable_declaration
          | input_statement
          ;
 
-variable_declaration: 'int' ID '=' NUMBER ';' 
-                    | 'float' ID '=' FLOAT ';' 
+variable_declaration: 'int' ID '=' int_expression ';' 
+                    | 'float' ID '=' float_expression ';' 
                     | 'bool' ID '=' boolean_expression ';' ;
 
-assignment: ID '=' expression ';' 
+assignment: ID '=' float_expression ';' 
+          | ID '=' int_expression ';' 
           | ID '=' boolean_expression ';' ;
 
-print_statement: 'print' '(' (expression | boolean_expression) ')' ';' ;
+print_statement: 'print' '(' (float_expression | int_expression | boolean_expression) ')' ';' ;
 
 input_statement: ID '=' 'input' '(' ')' ';' ;
 
-expression: expression op=('*'|'/') expression # MulDiv
-          | expression op=('+'|'-') expression # AddSub
-          | '(' expression ')'                  # Parens
+int_expression: int_expression op=('*'|'/') int_expression # MulDivInt
+          | int_expression op=('+'|'-') int_expression # AddSubInt
+          | '(' int_expression ')'                  # ParensInt
           | NUMBER                               # Number
+          | ID                                   # VariableInt
+          ;
+
+float_expression: float_expression op=('*'|'/') float_expression # MulDivFloat
+          | float_expression op=('+'|'-') float_expression # AddSubFloat
+          | '(' float_expression ')'                  # ParensFloat
           | FLOAT                                # FloatNumber
-          | ID                                   # Variable
+          | ID                                   # VariableFloat
           ;
 
 boolean_expression: boolean_expression op=('AND' | 'OR' | 'XOR') boolean_expression # BoolBinaryOp

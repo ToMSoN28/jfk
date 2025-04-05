@@ -62,15 +62,6 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SimpleLangParser#Variable.
-    def enterVariable(self, ctx:SimpleLangParser.VariableContext):
-        pass
-
-    # Exit a parse tree produced by SimpleLangParser#Variable.
-    def exitVariable(self, ctx:SimpleLangParser.VariableContext):
-        pass
-
-
     # Enter a parse tree produced by SimpleLangParser#Number.
     def enterNumber(self, ctx:SimpleLangParser.NumberContext):
         pass
@@ -80,30 +71,66 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SimpleLangParser#MulDiv.
-    def enterMulDiv(self, ctx:SimpleLangParser.MulDivContext):
+    # Enter a parse tree produced by SimpleLangParser#MulDivInt.
+    def enterMulDivInt(self, ctx:SimpleLangParser.MulDivIntContext):
         pass
 
-    # Exit a parse tree produced by SimpleLangParser#MulDiv.
-    def exitMulDiv(self, ctx:SimpleLangParser.MulDivContext):
-        pass
-
-
-    # Enter a parse tree produced by SimpleLangParser#AddSub.
-    def enterAddSub(self, ctx:SimpleLangParser.AddSubContext):
-        pass
-
-    # Exit a parse tree produced by SimpleLangParser#AddSub.
-    def exitAddSub(self, ctx:SimpleLangParser.AddSubContext):
+    # Exit a parse tree produced by SimpleLangParser#MulDivInt.
+    def exitMulDivInt(self, ctx:SimpleLangParser.MulDivIntContext):
         pass
 
 
-    # Enter a parse tree produced by SimpleLangParser#Parens.
-    def enterParens(self, ctx:SimpleLangParser.ParensContext):
+    # Enter a parse tree produced by SimpleLangParser#AddSubInt.
+    def enterAddSubInt(self, ctx:SimpleLangParser.AddSubIntContext):
         pass
 
-    # Exit a parse tree produced by SimpleLangParser#Parens.
-    def exitParens(self, ctx:SimpleLangParser.ParensContext):
+    # Exit a parse tree produced by SimpleLangParser#AddSubInt.
+    def exitAddSubInt(self, ctx:SimpleLangParser.AddSubIntContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#VariableInt.
+    def enterVariableInt(self, ctx:SimpleLangParser.VariableIntContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#VariableInt.
+    def exitVariableInt(self, ctx:SimpleLangParser.VariableIntContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#ParensInt.
+    def enterParensInt(self, ctx:SimpleLangParser.ParensIntContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#ParensInt.
+    def exitParensInt(self, ctx:SimpleLangParser.ParensIntContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#ParensFloat.
+    def enterParensFloat(self, ctx:SimpleLangParser.ParensFloatContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#ParensFloat.
+    def exitParensFloat(self, ctx:SimpleLangParser.ParensFloatContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#AddSubFloat.
+    def enterAddSubFloat(self, ctx:SimpleLangParser.AddSubFloatContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#AddSubFloat.
+    def exitAddSubFloat(self, ctx:SimpleLangParser.AddSubFloatContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#VariableFloat.
+    def enterVariableFloat(self, ctx:SimpleLangParser.VariableFloatContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#VariableFloat.
+    def exitVariableFloat(self, ctx:SimpleLangParser.VariableFloatContext):
         pass
 
 
@@ -113,6 +140,15 @@ class SimpleLangListener(ParseTreeListener):
 
     # Exit a parse tree produced by SimpleLangParser#FloatNumber.
     def exitFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#MulDivFloat.
+    def enterMulDivFloat(self, ctx:SimpleLangParser.MulDivFloatContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#MulDivFloat.
+    def exitMulDivFloat(self, ctx:SimpleLangParser.MulDivFloatContext):
         pass
 
 

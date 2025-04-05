@@ -32,12 +32,14 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
     def visitVariable_declaration(self, ctx):
         var_name = ctx.ID().getText()
 
-        if ctx.NUMBER():
+        if ctx.int_expression():
             llvm_type = ir.IntType(32)
-            initializer = ir.Constant(llvm_type, int(ctx.NUMBER().getText()))
-        elif ctx.FLOAT():
+            # initializer = ir.Constant(llvm_type, int(ctx.NUMBER().getText()))
+            initializer = self.visitIntExpression(ctx.int_expression())
+        elif ctx.float_expression():
             llvm_type = ir.FloatType()
-            initializer = ir.Constant(llvm_type, float(ctx.FLOAT().getText()))
+            # initializer = ir.Constant(llvm_type, float(ctx.FLOAT().getText()))
+            initializer = self.visitFloatExpression(ctx.float_expression())
         elif ctx.boolean_expression():
             llvm_type = ir.IntType(1)
             initializer = self.visitBooleanExpression(ctx.boolean_expression())
@@ -66,8 +68,10 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         builder = ir.IRBuilder(block)
         self.current_builder = builder  # Set current builder for expression evaluation
 
-        if ctx.expression():
-            value = self.visitExpression(ctx.expression())
+        if ctx.int_expression():
+            value = self.visitIntExpression(ctx.int_expression())
+        elif ctx.float_expression():
+            value = self.visitFloatExpression(ctx.float_expression())
         elif ctx.boolean_expression():
             value = self.visitBooleanExpression(ctx.boolean_expression())
         else:
@@ -101,12 +105,40 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             builder.call(self.printf, [fmt_ptr, value])
             builder.ret_void()
 
-    def visitExpression(self, ctx):
+    def visitIntExpression(self, ctx):
         if ctx.getChildCount() == 1:
             text = ctx.getText()
             if text.isdigit():
                 return ir.Constant(ir.IntType(32), int(text))
-            elif '.' in text:
+            elif text in self.symbol_table:
+                global_var = self.symbol_table[text]
+                return self.current_builder.load(global_var)
+            else:
+                raise ValueError(f"Unknown identifier: {text}")
+
+        elif ctx.getChildCount() == 3:
+            left = self.visitIntExpression(ctx.int_expression(0))
+            right = self.visitIntExpression(ctx.int_expression(1))
+            op = ctx.getChild(1).getText()
+
+            if left.type != right.type:
+                raise ValueError(f"Type mismatch in expression: {left.type} vs {right.type}")
+
+            if op == '+':
+                return self.current_builder.add(left, right)
+            elif op == '-':
+                return self.current_builder.sub(left, right)
+            elif op == '*':
+                return self.current_builder.mul(left, right)
+            elif op == '/':
+                return self.current_builder.sdiv(left, right)
+            else:
+                raise ValueError(f"Unsupported binary operator: {op}")
+    
+    def visitFloatExpression(self, ctx):
+        if ctx.getChildCount() == 1:
+            text = ctx.getText()
+            if '.' in text:
                 return ir.Constant(ir.FloatType(), float(text))
             elif text in self.symbol_table:
                 global_var = self.symbol_table[text]
@@ -115,8 +147,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 raise ValueError(f"Unknown identifier: {text}")
 
         elif ctx.getChildCount() == 3:
-            left = self.visitExpression(ctx.expression(0))
-            right = self.visitExpression(ctx.expression(1))
+            left = self.visitFloatExpression(ctx.float_expression(0))
+            right = self.visitFloatExpression(ctx.float_expression(1))
             op = ctx.getChild(1).getText()
 
             if left.type != right.type:
@@ -126,13 +158,13 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             is_float = isinstance(left.type, ir.FloatType)
 
             if op == '+':
-                return self.current_builder.add(left, right) if is_int else self.current_builder.fadd(left, right)
+                return self.current_builder.fadd(left, right)
             elif op == '-':
-                return self.current_builder.sub(left, right) if is_int else self.current_builder.fsub(left, right)
+                return self.current_builder.fsub(left, right)
             elif op == '*':
-                return self.current_builder.mul(left, right) if is_int else self.current_builder.fmul(left, right)
+                return self.current_builder.fmul(left, right)
             elif op == '/':
-                return self.current_builder.sdiv(left, right) if is_int else self.current_builder.fdiv(left, right)
+                return self.current_builder.fdiv(left, right)
             else:
                 raise ValueError(f"Unsupported binary operator: {op}")
 
@@ -220,10 +252,9 @@ def compile(input_text):
 if __name__ == '__main__':
     input_text = """
     float a = 10.23;
-    int b = 20;
-    float c = 0;
+    float b = 20.0;
+    float c = 0.0;
     c = a + b;
-    print(c);
     """
     llvm_module = compile(input_text)
 
