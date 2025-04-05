@@ -125,6 +125,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 raise ValueError(f"Unsupported binary operator: {op}")
 
     def visitBooleanExpression(self, ctx):
+        # print(f'Visiting Boolean Expression: {ctx.getText()}')
         if ctx.getChildCount() == 1:
             text = ctx.getText()
             if text == "true":
@@ -143,22 +144,39 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 return value
             else:
                 raise ValueError(f"Unknown boolean value: {text}")
+        elif ctx.getChildCount() == 2:
+            if ctx.getChild(0).getText() == "NEG":
+                expr = self.visitBooleanExpression(ctx.getChild(1))
+                return ir.Constant(ir.IntType(1), int(not bool(expr.constant)))
+            else:
+                raise ValueError(f"Unsupported unary operator: {ctx.getChild(0).getText()}")
         elif ctx.getChildCount() == 3:
             if ctx.getChild(0).getText() == "(" and ctx.getChild(2).getText() == ")":
                 return self.visitBooleanExpression(ctx.getChild(1))
             else:
                 left = self.visitBooleanExpression(ctx.getChild(0))
-                right = self.visitBooleanExpression(ctx.getChild(2))
+                # right = self.visitBooleanExpression(ctx.getChild(2))
                 op = ctx.getChild(1).getText()
 
                 if op == "AND":
-                    return ir.Constant(ir.IntType(1), int(bool(left.constant) and bool(right.constant)))
+                    if int(bool(left.constant)) == 0:
+                        return ir.Constant(ir.IntType(1), 0)
+                    else:
+                        right = self.visitBooleanExpression(ctx.getChild(2))
+                        return ir.Constant(ir.IntType(1), int(bool(left.constant) and bool(right.constant)))
                 elif op == "OR":
-                    return ir.Constant(ir.IntType(1), int(bool(left.constant) or bool(right.constant)))
+                    if int(bool(left.constant)) == 1:
+                        return ir.Constant(ir.IntType(1), 1)
+                    else:
+                        right = self.visitBooleanExpression(ctx.getChild(2))
+                        return ir.Constant(ir.IntType(1), int(bool(left.constant) or bool(right.constant)))
                 elif op == "XOR":
+                    right = self.visitBooleanExpression(ctx.getChild(2))
                     return ir.Constant(ir.IntType(1), int(bool(left.constant) ^ bool(right.constant)))
                 else:
                     raise ValueError(f"Unsupported boolean operator: {op}")
+        else:
+            raise ValueError("Invalid boolean expression")
 
     def visitProgram(self, ctx):
         for statement in ctx.statement():
