@@ -125,7 +125,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 raise ValueError(f"Unsupported binary operator: {op}")
 
     def visitBooleanExpression(self, ctx):
-        # print(f'Visiting Boolean Expression: {ctx.getText()}')
+        print(f'Visiting Boolean Expression: {ctx.getText()}')
         if ctx.getChildCount() == 1:
             text = ctx.getText()
             if text == "true":
@@ -218,11 +218,7 @@ def compile(input_text):
 
 if __name__ == '__main__':
     input_text = """
-    bool c = (true AND false) OR true;
-    int a = 10;
-    print(a);
-    a = 20;
-    print(a);
+    bool c = true OR (false AND true);
     """
     llvm_module = compile(input_text)
 
