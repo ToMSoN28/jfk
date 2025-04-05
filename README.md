@@ -6,10 +6,12 @@ Study project - own compilator
 * initizlization float as float
 * initialization bool as bool equation
 * overriding virables as equation using virables
-* writing from screan (only int)
 * printing to screen
+* * short-circiut boolean evaluation
 
 ## TODO
-* short-circiut boolean evaluation
-* writing from screan (float, bool)
 * dalcaration of int, float equation
+
+##Repair
+* writing from screan (only int)
+* writing from screan (float, bool)
