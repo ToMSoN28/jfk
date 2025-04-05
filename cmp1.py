@@ -13,6 +13,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         self.function_counter = 0
         self.generated_funcs = []
         self.printf = None
+        self.current_builder = None
         self._declare_printf()
 
     def _declare_printf(self):
@@ -58,6 +59,13 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
         global_var = self.symbol_table[var_name]
 
+        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_func_{self.function_counter}")
+        self.function_counter += 1
+        self.generated_funcs.append(func.name)
+        block = func.append_basic_block(name="entry")
+        builder = ir.IRBuilder(block)
+        self.current_builder = builder  # Set current builder for expression evaluation
+
         if ctx.expression():
             value = self.visitExpression(ctx.expression())
         elif ctx.boolean_expression():
@@ -65,11 +73,6 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         else:
             raise ValueError("Invalid assignment")
 
-        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_func_{self.function_counter}")
-        self.function_counter += 1
-        self.generated_funcs.append(func.name)
-        block = func.append_basic_block(name="entry")
-        builder = ir.IRBuilder(block)
         builder.store(value, global_var)
         builder.ret_void()
 
@@ -84,7 +87,16 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             builder = ir.IRBuilder(block)
             value = builder.load(global_var)
 
-            fmt_var = self._create_global_format_str("%d\n")
+            if value.type == ir.IntType(32):
+                fmt = "%d\n"
+            elif value.type == ir.FloatType():
+                fmt = "%f\n"
+            elif value.type == ir.IntType(1):
+                fmt = "%d\n"
+            else:
+                raise ValueError(f"Unsupported type for print: {value.type}")
+
+            fmt_var = self._create_global_format_str(fmt)
             fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
             builder.call(self.printf, [fmt_ptr, value])
             builder.ret_void()
@@ -98,34 +110,33 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 return ir.Constant(ir.FloatType(), float(text))
             elif text in self.symbol_table:
                 global_var = self.symbol_table[text]
-                func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_func_{self.function_counter}")
-                self.function_counter += 1
-                self.generated_funcs.append(func.name)
-                block = func.append_basic_block(name="entry")
-                builder = ir.IRBuilder(block)
-                value = builder.load(global_var)
-                builder.ret_void()
-                return value
+                return self.current_builder.load(global_var)
             else:
                 raise ValueError(f"Unknown identifier: {text}")
+
         elif ctx.getChildCount() == 3:
             left = self.visitExpression(ctx.expression(0))
             right = self.visitExpression(ctx.expression(1))
             op = ctx.getChild(1).getText()
 
+            if left.type != right.type:
+                raise ValueError(f"Type mismatch in expression: {left.type} vs {right.type}")
+
+            is_int = isinstance(left.type, ir.IntType)
+            is_float = isinstance(left.type, ir.FloatType)
+
             if op == '+':
-                return left + right if isinstance(left, ir.Constant) and isinstance(right, ir.Constant) else None
+                return self.current_builder.add(left, right) if is_int else self.current_builder.fadd(left, right)
             elif op == '-':
-                return left - right if isinstance(left, ir.Constant) and isinstance(right, ir.Constant) else None
+                return self.current_builder.sub(left, right) if is_int else self.current_builder.fsub(left, right)
             elif op == '*':
-                return left * right if isinstance(left, ir.Constant) and isinstance(right, ir.Constant) else None
+                return self.current_builder.mul(left, right) if is_int else self.current_builder.fmul(left, right)
             elif op == '/':
-                return left.sdiv(right) if isinstance(left.type, ir.IntType) else left.fdiv(right)
+                return self.current_builder.sdiv(left, right) if is_int else self.current_builder.fdiv(left, right)
             else:
                 raise ValueError(f"Unsupported binary operator: {op}")
 
     def visitBooleanExpression(self, ctx):
-        # print(f'Visiting Boolean Expression: {ctx.getText()}')
         if ctx.getChildCount() == 1:
             text = ctx.getText()
             if text == "true":
@@ -134,14 +145,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 return ir.Constant(ir.IntType(1), 0)
             elif text in self.symbol_table:
                 global_var = self.symbol_table[text]
-                func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_func_{self.function_counter}")
-                self.function_counter += 1
-                self.generated_funcs.append(func.name)
-                block = func.append_basic_block(name="entry")
-                builder = ir.IRBuilder(block)
-                value = builder.load(global_var)
-                builder.ret_void()
-                return value
+                return self.current_builder.load(global_var)
             else:
                 raise ValueError(f"Unknown boolean value: {text}")
         elif ctx.getChildCount() == 2:
@@ -155,7 +159,6 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 return self.visitBooleanExpression(ctx.getChild(1))
             else:
                 left = self.visitBooleanExpression(ctx.getChild(0))
-                # right = self.visitBooleanExpression(ctx.getChild(2))
                 op = ctx.getChild(1).getText()
 
                 if op == "AND":
@@ -192,9 +195,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             builder.call(func, [])
 
         builder.ret(ir.Constant(ir.IntType(32), 0))
-
         self.module.triple = "aarch64-apple-darwin"
-        # self.module.triple = "x86_64-pc-windows-msvc"
         self.module.data_layout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
         print("Generated LLVM IR:")
         print(self.module)
@@ -218,11 +219,11 @@ def compile(input_text):
 
 if __name__ == '__main__':
     input_text = """
-    bool c = (true AND false) OR true;
-    int a = 10;
-    print(a);
-    a = 20;
-    print(a);
+    float a = 10.23;
+    int b = 20;
+    float c = 0;
+    c = a + b;
+    print(c);
     """
     llvm_module = compile(input_text)
 
