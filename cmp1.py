@@ -10,6 +10,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
     def __init__(self):
         self.module = ir.Module(name="SimpleLang")
         self.symbol_table = {}
+        self.symbol_print = {}
         self.function_counter = 0
         self.generated_funcs = []
         self.printf = None
@@ -21,11 +22,28 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         self.printf = ir.Function(self.module, printf_ty, name="printf")
 
     def _create_global_format_str(self, fmt):
+        if fmt in self.symbol_print:
+            return self.symbol_print[fmt]
+
+        # Debug: wypisz format, jeśli jeszcze nie istnieje
+        print(f"Creating global format string for: {fmt}")
+
+        # Zakoduj jako UTF-8 + null terminator
         fmt_bytes = bytearray(fmt.encode("utf8")) + b"\00"
-        global_fmt = ir.GlobalVariable(self.module, ir.ArrayType(ir.IntType(8), len(fmt_bytes)), name=f".fmt{self.function_counter}")
+        const_array = ir.ArrayType(ir.IntType(8), len(fmt_bytes))
+
+        # Zadbaj o bezpieczną nazwę
+        safe_name = fmt.replace("%", "").replace(" ", "_").replace(".", "_").replace('\n','')
+        name = f".fmt_{safe_name}"
+
+        global_fmt = ir.GlobalVariable(self.module, const_array, name=name)
         global_fmt.linkage = 'internal'
         global_fmt.global_constant = True
-        global_fmt.initializer = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt_bytes)), fmt_bytes)
+        global_fmt.initializer = ir.Constant(const_array, fmt_bytes)
+
+        # Zapisz w słowniku, żeby nie duplikować
+        self.symbol_print[fmt] = global_fmt
+
         return global_fmt
 
     def visitVariable_declaration(self, ctx):
@@ -35,7 +53,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             llvm_type = ir.IntType(32)
             initializer = ir.Constant(llvm_type, int(ctx.NUMBER().getText()))
         elif ctx.FLOAT():
-            llvm_type = ir.FloatType()
+            llvm_type = ir.DoubleType()
             initializer = ir.Constant(llvm_type, float(ctx.FLOAT().getText()))
         elif ctx.boolean_expression():
             llvm_type = ir.IntType(1)
@@ -90,10 +108,11 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
             if isinstance(value.type, ir.IntType) and value.type.width == 32:
                 fmt = "%d\n"
-            elif isinstance(value.type, ir.FloatType):
+            elif isinstance(value.type, ir.DoubleType):
                 fmt = "%f\n"
             elif isinstance(value.type, ir.IntType) and value.type.width == 1:
                 fmt = "%d\n"
+                value = builder.zext(value, ir.IntType(32))
             else:
                 raise ValueError(f"Unsupported type for print: {value.type}")
 
@@ -115,7 +134,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             if text.isdigit():
                 return ir.Constant(ir.IntType(32), int(text))
             elif '.' in text:
-                return ir.Constant(ir.FloatType(), float(text))
+                return ir.Constant(ir.DoubleType(), float(text))
             elif text in self.symbol_table:
                 global_var = self.symbol_table[text]
                 return builder.load(global_var)
@@ -131,7 +150,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 raise ValueError(f"Type mismatch in expression: {left.type} vs {right.type}")
 
             is_int = isinstance(left.type, ir.IntType)
-            is_float = isinstance(left.type, ir.FloatType)
+            is_float = isinstance(left.type, ir.DoubleType)
 
             if op == '+':
                 return builder.add(left, right) if is_int else builder.fadd(left, right)
@@ -269,7 +288,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             builder.call(func, [])
 
         builder.ret(ir.Constant(ir.IntType(32), 0))
-        self.module.triple = "aarch64-apple-darwin"
+        # self.module.triple = "aarch64-apple-darwin"
+        self.module.triple = "x86_64-pc-windows-msvc"
         self.module.data_layout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
         print("Generated LLVM IR:")
         print(self.module)
@@ -295,9 +315,12 @@ if __name__ == '__main__':
     input_text = """
     float a = 1.0;
     float b = 2.0;
-    float c = 0.0;
+    float c = 3.14;
+    print(c);
     c = a + b;
     print(c);
+    int x = 1;
+    print(x);
     bool aa = true OR (false AND true);
     print(aa);
     bool bb = false;
