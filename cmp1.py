@@ -180,13 +180,64 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             else:
                 left = self.visitBooleanExpression(ctx.getChild(0), builder)
                 op = ctx.getChild(1).getText()
+                if isinstance(left, ir.Constant):
+                    if left.constant == 0 and op == 'AND':
+                        return ir.Constant(ir.IntType(1), 0)
+                    if left.constant == 1 and op == 'OR':
+                        return ir.Constant(ir.IntType(1), 1)
                 right = self.visitBooleanExpression(ctx.getChild(2), builder)
-
+                print(f"Left: {left}, Op: {op}, Right: {right} -> {ctx.getText()}")
+                if isinstance(left, ir.Constant):
+                    print(f"Left value (constant): {left.constant}")
+                else:
+                    print(f"Left value (non-constant): {left}")
+                
                 if builder:
-                    if op == "AND":
-                        return builder.and_(left, right)
-                    elif op == "OR":
-                        return builder.or_(left, right)
+                    if op == "OR":
+                        result = builder.alloca(ir.IntType(1), name="or_result")
+                        then_block = builder.append_basic_block(name="or_true")
+                        else_block = builder.append_basic_block(name="or_rhs")
+                        merge_block = builder.append_basic_block(name="or_merge")
+
+                        builder.cbranch(left, then_block, else_block)
+
+                        # then block (left is true)
+                        builder.position_at_start(then_block)
+                        builder.store(ir.Constant(ir.IntType(1), 1), result)
+                        builder.branch(merge_block)
+
+                        # else block (evaluate right)
+                        builder.position_at_start(else_block)
+                        right_val = self.visitBooleanExpression(ctx.getChild(2), builder)
+                        builder.store(right_val, result)
+                        builder.branch(merge_block)
+
+                        # merge block
+                        builder.position_at_start(merge_block)
+                        return builder.load(result)
+
+                    elif op == "AND":
+                        result = builder.alloca(ir.IntType(1), name="and_result")
+                        then_block = builder.append_basic_block(name="and_rhs")
+                        else_block = builder.append_basic_block(name="and_false")
+                        merge_block = builder.append_basic_block(name="and_merge")
+
+                        builder.cbranch(left, then_block, else_block)
+
+                        # then block (left is true, need to evaluate right)
+                        builder.position_at_start(then_block)
+                        right_val = self.visitBooleanExpression(ctx.getChild(2), builder)
+                        builder.store(right_val, result)
+                        builder.branch(merge_block)
+
+                        # else block (left is false => whole AND is false)
+                        builder.position_at_start(else_block)
+                        builder.store(ir.Constant(ir.IntType(1), 0), result)
+                        builder.branch(merge_block)
+
+                        # merge block
+                        builder.position_at_start(merge_block)
+                        return builder.load(result)
                     elif op == "XOR":
                         return builder.xor(left, right)
                 else:
@@ -247,10 +298,15 @@ if __name__ == '__main__':
     float c = 0.0;
     c = a + b;
     print(c);
-    bool aa = true;
+    bool aa = true OR (false AND true);
+    print(aa);
     bool bb = false;
+    print(bb);
     bool dd = true;
-    bool cc = (true AND false) or false;
+    bool cc = true
+    cc = false OR (bb AND dd);
+    print(cc);
+    cc = dd OR (bb AND dd);
     print(cc);
     """
     llvm_module = compile(input_text)
