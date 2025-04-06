@@ -28,23 +28,19 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         global_fmt.global_constant = True
         global_fmt.initializer = ir.Constant(ir.ArrayType(ir.IntType(8), len(fmt_bytes)), fmt_bytes)
         return global_fmt
-
+    
     def visitVariable_declaration(self, ctx):
         var_name = ctx.ID().getText()
 
         if ctx.int_expression():
             llvm_type = ir.IntType(32)
-            # initializer = ir.Constant(llvm_type, int(ctx.NUMBER().getText()))
-            initializer = self.visitIntExpression(ctx.int_expression())
+            initializer = ir.Constant(llvm_type, 0)
         elif ctx.float_expression():
             llvm_type = ir.FloatType()
-            # initializer = ir.Constant(llvm_type, float(ctx.FLOAT().getText()))
-            initializer = self.visitFloatExpression(ctx.float_expression())
+            initializer = ir.Constant(llvm_type, 0.0)
         elif ctx.boolean_expression():
             llvm_type = ir.IntType(1)
-            initializer = self.visitBooleanExpression(ctx.boolean_expression())
-            if not isinstance(initializer, ir.Constant):
-                initializer = ir.Constant(llvm_type, 0)
+            initializer = ir.Constant(llvm_type, 0)
         else:
             raise ValueError(f"Unsupported type for variable: {var_name}")
 
@@ -54,6 +50,26 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         global_var.global_constant = False
         self.symbol_table[var_name] = global_var
 
+        if ctx.int_expression() or ctx.float_expression() or ctx.boolean_expression():
+            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"declare_{var_name}_{self.function_counter}")
+            self.function_counter += 1
+            self.generated_funcs.append(func.name)
+            block = func.append_basic_block(name="entry")
+            builder = ir.IRBuilder(block)
+            self.current_builder = builder
+
+            if ctx.int_expression():
+                value = self.visitIntExpression(ctx.int_expression())
+            elif ctx.float_expression():
+                value = self.visitFloatExpression(ctx.float_expression())
+            elif ctx.boolean_expression():
+                value = self.visitBooleanExpression(ctx.boolean_expression())
+            else:
+                raise ValueError("Invalid initializer")
+
+            builder.store(value, global_var)
+            builder.ret_void()
+
     def visitAssignment(self, ctx):
         var_name = ctx.ID().getText()
         if var_name not in self.symbol_table:
@@ -61,7 +77,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
         global_var = self.symbol_table[var_name]
 
-        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_func_{self.function_counter}")
+        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"assign_{var_name}_{self.function_counter}")
         self.function_counter += 1
         self.generated_funcs.append(func.name)
         block = func.append_basic_block(name="entry")
@@ -79,31 +95,57 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
         builder.store(value, global_var)
         builder.ret_void()
-
+        
     def visitPrint_statement(self, ctx):
-        expr_text = ctx.expression().getText()
-        if expr_text in self.symbol_table:
-            global_var = self.symbol_table[expr_text]
-            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_func_{self.function_counter}")
-            self.function_counter += 1
-            self.generated_funcs.append(func.name)
-            block = func.append_basic_block(name="entry")
-            builder = ir.IRBuilder(block)
-            value = builder.load(global_var)
+        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"print_{self.function_counter}")
+        self.function_counter += 1
+        self.generated_funcs.append(func.name)
+        block = func.append_basic_block(name="entry")
+        builder = ir.IRBuilder(block)
+        self.current_builder = builder  # Set current builder for expression evaluation
+        
+        value = None
+        if ctx.int_expression():
+            value = self.visitIntExpression(ctx.int_expression())
+            fmt = "%d\n"
+        elif ctx.float_expression():
+            value = self.visitFloatExpression(ctx.float_expression())
+            fmt = "%f\n"
+        elif ctx.boolean_expression():
+            value = self.visitBooleanExpression(ctx.boolean_expression())
+            fmt = "%d\n"
+        else:
+            raise ValueError(f"Unsupported type for print: {value.type}")
 
-            if value.type == ir.IntType(32):
-                fmt = "%d\n"
-            elif value.type == ir.FloatType():
-                fmt = "%f\n"
-            elif value.type == ir.IntType(1):
-                fmt = "%d\n"
-            else:
-                raise ValueError(f"Unsupported type for print: {value.type}")
+        fmt_var = self._create_global_format_str(fmt)
+        fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
+        builder.call(self.printf, [fmt_ptr, value])
+        builder.ret_void()    
 
-            fmt_var = self._create_global_format_str(fmt)
-            fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
-            builder.call(self.printf, [fmt_ptr, value])
-            builder.ret_void()
+    # def visitPrint_statement(self, ctx):
+    #     expr_text = ctx.expression().getText()
+    #     if expr_text in self.symbol_table:
+    #         global_var = self.symbol_table[expr_text]
+    #         func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_func_{self.function_counter}")
+    #         self.function_counter += 1
+    #         self.generated_funcs.append(func.name)
+    #         block = func.append_basic_block(name="entry")
+    #         builder = ir.IRBuilder(block)
+    #         value = builder.load(global_var)
+
+    #         if value.type == ir.IntType(32):
+    #             fmt = "%d\n"
+    #         elif value.type == ir.FloatType():
+    #             fmt = "%f\n"
+    #         elif value.type == ir.IntType(1):
+    #             fmt = "%d\n"
+    #         else:
+    #             raise ValueError(f"Unsupported type for print: {value.type}")
+
+    #         fmt_var = self._create_global_format_str(fmt)
+    #         fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
+    #         builder.call(self.printf, [fmt_ptr, value])
+    #         builder.ret_void()
 
     def visitIntExpression(self, ctx):
         if ctx.getChildCount() == 1:
@@ -138,6 +180,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
     def visitFloatExpression(self, ctx):
         if ctx.getChildCount() == 1:
             text = ctx.getText()
+            print(f'FloatExpression ctx.getChildCount() == 1 text: {ctx.getText()}')
             if '.' in text:
                 return ir.Constant(ir.FloatType(), float(text))
             elif text in self.symbol_table:
@@ -227,7 +270,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             builder.call(func, [])
 
         builder.ret(ir.Constant(ir.IntType(32), 0))
-        self.module.triple = "aarch64-apple-darwin"
+        # self.module.triple = "aarch64-apple-darwin"
+        self.module.triple = "x86_64-pc-windows-msvc"
         self.module.data_layout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
         print("Generated LLVM IR:")
         print(self.module)
@@ -251,10 +295,12 @@ def compile(input_text):
 
 if __name__ == '__main__':
     input_text = """
-    float a = 10.23;
-    float b = 20.0;
-    float c = 0.0;
-    c = a + b;
+    int a = 1+2;
+    int b = 6-2;
+    int c = a*b;
+    print(a);
+    print(b);
+    print(c);
     """
     llvm_module = compile(input_text)
 
