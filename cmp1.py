@@ -15,11 +15,48 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         self.generated_funcs = []
         self.printf = None
         self._declare_printf()
+        self._declare_scanf()
 
     def _declare_printf(self):
         voidptr_ty = ir.IntType(8).as_pointer()
         printf_ty = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg=True)
         self.printf = ir.Function(self.module, printf_ty, name="printf")
+
+    def _declare_scanf(self):
+        voidptr_ty = ir.IntType(8).as_pointer()
+        input_ty = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg=True)
+        self.input = ir.Function(self.module, input_ty, name="scanf")
+
+    def visitInput_statement(self, ctx):
+        var_name = ctx.ID().getText()
+        if var_name not in self.symbol_table:
+            raise ValueError(f"Variable '{var_name}' is not declared")
+
+        global_var = self.symbol_table[var_name]
+
+        # Create a dummy function to hold the input operation
+        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []),
+                           name=f"dummy_input_func_{self.function_counter}")
+        self.function_counter += 1
+        self.generated_funcs.append(func.name)
+        block = func.append_basic_block(name="entry")
+        builder = ir.IRBuilder(block)
+        value = builder.load(global_var)
+        # Handle user input based on variable type
+        if isinstance(value.type, ir.IntType):
+            fmt = "%d"  # Input format for integer
+        elif isinstance(value.type, ir.DoubleType):
+            fmt = "%lf"  # Input format for float
+        else:
+            raise ValueError(f"Unsupported type for input: {global_var.type}")
+
+        # Create the format string for input
+        fmt_var = self._create_global_format_str(fmt)
+        fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
+
+        # Call the external input function to read input
+        builder.call(self.input, [fmt_ptr, global_var])
+        builder.ret_void()
 
     def _create_global_format_str(self, fmt):
         if fmt in self.symbol_print:
@@ -288,8 +325,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             builder.call(func, [])
 
         builder.ret(ir.Constant(ir.IntType(32), 0))
-        # self.module.triple = "aarch64-apple-darwin"
-        self.module.triple = "x86_64-pc-windows-msvc"
+        self.module.triple = "aarch64-apple-darwin"
+        #self.module.triple = "x86_64-pc-windows-msvc"
         self.module.data_layout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
         print("Generated LLVM IR:")
         print(self.module)
@@ -314,23 +351,8 @@ def compile(input_text):
 if __name__ == '__main__':
     input_text = """
     float a = 1.0;
-    float b = 2.0;
-    float c = 3.14;
-    print(c);
-    c = a + b;
-    print(c);
-    int x = 1;
-    print(x);
-    bool aa = true OR (false AND true);
-    print(aa);
-    bool bb = false;
-    print(bb);
-    bool dd = true;
-    bool cc = true
-    cc = false OR (bb AND dd);
-    print(cc);
-    cc = dd OR (bb AND dd);
-    print(cc);
+    a = input();
+    print(a);
     """
     llvm_module = compile(input_text)
 
