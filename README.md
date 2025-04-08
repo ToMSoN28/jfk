@@ -9,6 +9,8 @@ Study project - own compilator
 * printing to screen (also equation)
 * short-circiut boolean evaluation
 * Makefile - make to compile and run code from code.txt
+* writing from screan
 
 ## TODO
-* writing from screan
+* Static text analysis on compilation level
+
