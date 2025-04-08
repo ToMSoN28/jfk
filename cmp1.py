@@ -1,4 +1,4 @@
-import sys
+import sys, os
 from antlr4 import *
 from SimpleLangLexer import SimpleLangLexer
 from SimpleLangParser import SimpleLangParser
@@ -311,30 +311,38 @@ def compile(input_text):
     return llvm_module
 
 
+
+DEFAULT_SOURCE = """
+float a = 1.0;
+float b = 2.0;
+float c = 3.14;
+print(c);
+c = a + b;
+print(c);
+int x = 1;
+print(x);
+bool aa = true OR (false AND true);
+print(aa);
+bool bb = false;
+print(bb);
+bool dd = true;
+bool cc = true
+cc = false OR (bb AND dd);
+print(cc);
+cc = dd OR (bb AND dd);
+print(cc);
+"""
+ 
 if __name__ == '__main__':
-    input_text = """
-    float a = 1.0;
-    float b = 2.0;
-    float c = 3.14;
-    print(c);
-    c = a + b;
-    print(c);
-    int x = 1;
-    print(x);
-    bool aa = true OR (false AND true);
-    print(aa);
-    bool bb = false;
-    print(bb);
-    bool dd = true;
-    bool cc = true
-    cc = false OR (bb AND dd);
-    print(cc);
-    cc = dd OR (bb AND dd);
-    print(cc);
-    """
+    if os.path.exists("code.txt"):
+        with open("code.txt", "r") as f:
+            input_text = f.read()
+    else:
+        print("[INFO] Plik 'code.txt' nie znaleziony — używam domyślnego kodu.")
+        input_text = DEFAULT_SOURCE
+
     llvm_module = compile(input_text)
 
     with open("output.ll", "w") as f:
         f.write(str(llvm_module))
-
     print("LLVM IR has been written to output.ll")
