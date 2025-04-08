@@ -8,6 +8,8 @@ Study project - own compilator
 * overriding virables as equation using virables
 * printing to screen
 * short-circiut boolean evaluation
+* writing from screan
 
 ## TODO
-* writing from screan
+* Static text analysis on compilation level
+
