@@ -6,8 +6,9 @@ Study project - own compilator
 * initizlization float as double
 * initialization bool as bool equation
 * overriding virables as equation using virables
-* printing to screen
+* printing to screen (also equation)
 * short-circiut boolean evaluation
+* Makefile - make to compile and run code from code.txt
 * writing from screan
 
 ## TODO
