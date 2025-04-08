@@ -1,20 +1,2 @@
 float a = 1.0;
-float b = 2.11;
-float c = 3.14;
-print(c);
-c = a + b;
-print(c);
-int x = 1;
-print(x);
-bool aa = true OR (false AND true);
-print(aa);
-bool bb = false;
-print(bb);
-bool dd = true;
-bool cc = true
-cc = false OR (bb AND dd);
-print(cc);
-cc = dd OR (bb AND dd);
-print(cc);
-c = c+b
-print(c);
+print(a);

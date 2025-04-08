@@ -1,9 +1,14 @@
 import sys, os
+from zipfile import stringFileHeader
+
 from antlr4 import *
+import sys
 from SimpleLangLexer import SimpleLangLexer
 from SimpleLangParser import SimpleLangParser
 from SimpleLangVisitor import SimpleLangVisitor
 from llvmlite import ir
+
+from test import SimpleLangChecker
 
 
 class SimpleLangIRVisitor(SimpleLangVisitor):
@@ -84,7 +89,10 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         return global_fmt
 
     def visitVariable_declaration(self, ctx):
+
         var_name = ctx.ID().getText()
+        if var_name == "<missing ID>":
+            raise AttributeError("No variable name")
 
         if ctx.NUMBER():
             llvm_type = ir.IntType(32)
@@ -239,7 +247,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                     print(f"Left value (constant): {left.constant}")
                 else:
                     print(f"Left value (non-constant): {left}")
-                
+
                 if builder:
                     if op == "OR":
                         result = builder.alloca(ir.IntType(1), name="or_result")
@@ -330,10 +338,8 @@ def compile(input_text):
     lexer = SimpleLangLexer(input_stream)
     stream = CommonTokenStream(lexer)
     parser = SimpleLangParser(stream)
-    tree = parser.program()
 
-    print("Parse Tree:")
-    print(tree.toStringTree(recog=parser))
+    tree = parser.program()
 
     visitor = SimpleLangIRVisitor()
     llvm_module = visitor.visitProgram(tree)
@@ -363,13 +369,20 @@ print(cc);
 """
 
 if __name__ == '__main__':
-    if os.path.exists("code.txt"):
+    filepath = ''
+    if len(sys.argv) > 1:
+        filepath = sys.argv[1]
+    else:
+        filepath = 'code.txt'
+    if os.path.exists(filepath):
         with open("code.txt", "r") as f:
             input_text = f.read()
     else:
-        print("[INFO] Plik 'code.txt' nie znaleziony — używam domyślnego kodu.")
+        print(f'[INFO] Plik {filepath} nie znaleziony — używam domyślnego kodu.')
         input_text = DEFAULT_SOURCE
 
+    checker = SimpleLangChecker(filepath)
+    checker.check()
     llvm_module = compile(input_text)
 
     with open("output.ll", "w") as f:
