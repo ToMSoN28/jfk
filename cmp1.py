@@ -95,36 +95,28 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
     def visitPrint_statement(self, ctx):
         expr_text = ctx.expression().getText()
+        print(expr_text)
 
         func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_print_func_{self.function_counter}")
         self.function_counter += 1
         self.generated_funcs.append(func.name)
         block = func.append_basic_block(name="entry")
         builder = ir.IRBuilder(block)
-
-        if expr_text in self.symbol_table:
-            global_var = self.symbol_table[expr_text]
-            value = builder.load(global_var)
-
-            if isinstance(value.type, ir.IntType) and value.type.width == 32:
-                fmt = "%d\n"
-            elif isinstance(value.type, ir.DoubleType):
-                fmt = "%f\n"
-            elif isinstance(value.type, ir.IntType) and value.type.width == 1:
-                fmt = "%d\n"
-                value = builder.zext(value, ir.IntType(32))
-            else:
-                raise ValueError(f"Unsupported type for print: {value.type}")
-
-            fmt_var = self._create_global_format_str(fmt)
-            fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
-            builder.call(self.printf, [fmt_ptr, value])
-        else:
-            fallback = ir.Constant(ir.IntType(32), 999)
+        
+        value = self.visitExpression(ctx.expression(), builder)
+        if isinstance(value.type, ir.IntType) and value.type.width == 32:
             fmt = "%d\n"
-            fmt_var = self._create_global_format_str(fmt)
-            fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
-            builder.call(self.printf, [fmt_ptr, fallback])
+        elif isinstance(value.type, ir.DoubleType):
+            fmt = "%f\n"
+        elif isinstance(value.type, ir.IntType) and value.type.width == 1:
+            fmt = "%d\n"
+            value = builder.zext(value, ir.IntType(32))
+        else:
+            raise ValueError(f"Unsupported type for print: {value.type}")
+
+        fmt_var = self._create_global_format_str(fmt)
+        fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
+        builder.call(self.printf, [fmt_ptr, value])
 
         builder.ret_void()
 
