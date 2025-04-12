@@ -114,18 +114,21 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         global_var.global_constant = False
         self.symbol_table[var_name] = global_var
 
-    def visitAssignment(self, ctx):
+    def visitAssignment(self, ctx, builder=None):
         var_name = ctx.ID().getText()
         if var_name not in self.symbol_table:
             raise ValueError(f"Variable '{var_name}' is not declared")
 
         global_var = self.symbol_table[var_name]
-
-        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_ass_func_{self.function_counter}")
-        self.function_counter += 1
-        self.generated_funcs.append(func.name)
-        block = func.append_basic_block(name="entry")
-        builder = ir.IRBuilder(block)
+        end_fun = False
+        
+        if not builder:
+            end_fun = True
+            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_ass_func_{self.function_counter}")
+            self.function_counter += 1
+            self.generated_funcs.append(func.name)
+            block = func.append_basic_block(name="entry")
+            builder = ir.IRBuilder(block)
 
         value = None
         if ctx.expression():
@@ -136,17 +139,21 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         if value is not None:
             builder.store(value, global_var)
 
-        builder.ret_void()
+        if end_fun:
+            builder.ret_void()
 
-    def visitPrint_statement(self, ctx):
+    def visitPrint_statement(self, ctx, builder=None):
         expr_text = ctx.expression().getText()
         print(expr_text)
+        end_fun = False
 
-        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_print_func_{self.function_counter}")
-        self.function_counter += 1
-        self.generated_funcs.append(func.name)
-        block = func.append_basic_block(name="entry")
-        builder = ir.IRBuilder(block)
+        if not builder:
+            end_fun = True
+            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_print_func_{self.function_counter}")
+            self.function_counter += 1
+            self.generated_funcs.append(func.name)
+            block = func.append_basic_block(name="entry")
+            builder = ir.IRBuilder(block)
 
         value = self.visitExpression(ctx.expression(), builder)
         if isinstance(value.type, ir.IntType) and value.type.width == 32:
@@ -163,7 +170,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
         builder.call(self.printf, [fmt_ptr, value])
 
-        builder.ret_void()
+        if end_fun:
+            builder.ret_void()
 
     def visitExpression(self, ctx, builder):
         if ctx.getChildCount() == 1:
@@ -217,6 +225,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                         return global_var.initializer
                     else:
                         return ir.Constant(ir.IntType(1), 0)  # Fallback if no initializer
+            elif ctx.getChild(0) == ctx.comparizon_expression():
+                return self.visitComparizon_expression(ctx.comparizon_expression(), builder)
             else:
                 raise ValueError(f"Unknown boolean value: {text}")
 
@@ -242,7 +252,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                     if left.constant == 1 and op == 'OR':
                         return ir.Constant(ir.IntType(1), 1)
                 right = self.visitBooleanExpression(ctx.getChild(2), builder)
-                print(f"Left: {left}, Op: {op}, Right: {right} -> {ctx.getText()}")
+                # print(f"Left: {left}, Op: {op}, Right: {right} -> {ctx.getText()}")
                 if isinstance(left, ir.Constant):
                     print(f"Left value (constant): {left.constant}")
                 else:
@@ -310,6 +320,119 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 return ir.Constant(ir.IntType(1), 0)  # Fallback
 
         raise ValueError("Invalid boolean expression")
+    
+    def visitComparizon_expression(self, ctx, builder):
+        left = self.visitExpression(ctx.getChild(0), builder)
+        right = self.visitExpression(ctx.getChild(2), builder)
+        op = ctx.getChild(1).getText()
+
+        if left.type != right.type:
+            raise ValueError(f"Type mismatch in comparison: {left.type} vs {right.type}")
+
+        if builder:
+            if left.type == ir.IntType(32):
+                if op == "<":
+                    return builder.icmp_signed("<", left, right)
+                elif op == "<=":
+                    return builder.icmp_signed("<=", left, right)
+                elif op == ">":
+                    return builder.icmp_signed(">", left, right)
+                elif op == ">=":
+                    return builder.icmp_signed(">=", left, right)
+                elif op == "==":
+                    return builder.icmp_signed("==", left, right)
+                elif op == "!=":
+                    return builder.icmp_signed("!=", left, right)
+            elif left.type == ir.DoubleType():
+                if op == "<":
+                    return builder.fcmp_ordered("<", left, right)
+                elif op == "<=":
+                    return builder.fcmp_ordered("<=", left, right)
+                elif op == ">":
+                    return builder.fcmp_ordered(">", left, right)
+                elif op == ">=":
+                    return builder.fcmp_ordered(">=", left, right)
+                elif op == "==":
+                    return builder.fcmp_ordered("==", left, right)
+                elif op == "!=":
+                    return builder.fcmp_ordered("!=", left, right)
+            else:
+                raise TypeError(f"Unsupported type for comparison: {left.type}")
+        else:
+        # Tryb interpretacyjny (np. bez buildera)
+            if op == '==':
+                result = left.value == right.value
+            elif op == '!=':
+                result = left.value != right.value
+            elif op == '<=':
+                result = left.value <= right.value
+            elif op == '>=':
+                result = left.value >= right.value
+            elif op == '<':
+                result = left.value < right.value
+            elif op == '>':
+                result = left.value > right.value
+            else:
+                raise NotImplementedError(f"Unsupported operator: {op}")
+
+            return ir.Constant(ir.IntType(1), int(result))
+            
+    def visitIf_statement(self, ctx):
+                
+        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_ass_func_{self.function_counter}")
+        self.function_counter += 1
+        self.generated_funcs.append(func.name)
+        block = func.append_basic_block(name="entry")
+        builder = ir.IRBuilder(block)
+        has_else_block = 'else' in ctx.getText() 
+        
+        # Stwórz nowy blok dla "if"
+        if_block = builder.append_basic_block('if')
+        # Stwórz nowy blok dla "else"
+        else_block = builder.append_basic_block('else')
+        # Stwórz nowy blok dla kontynuacji po "if"
+        merge_block = builder.append_basic_block('merge')
+
+        for i in range(ctx.getChildCount()):
+            print(i, ctx.getChild(i).getText())
+        # Warunkowe przejście
+        builder.cbranch(self.visitBooleanExpression(ctx.getChild(1), builder), if_block, else_block)
+
+        # Wykonaj kod dla "if"
+        builder.position_at_end(if_block)
+        self.visitCode_block(ctx.getChild(2), builder)  # Jeśli warunek spełniony
+        builder.branch(merge_block)  # Przejdź do "merge_block" po wykonaniu kodu w if
+
+        # Wykonaj kod dla "else"
+        builder.position_at_end(else_block)
+        if ctx.getChildCount() > 3:
+            self.visitCode_block(ctx.getChild(4), builder)   # Jeśli warunek niespełniony
+        builder.branch(merge_block)  # Po wykonaniu kodu w else, przejdź do "merge_block"
+
+        # Po zakończeniu obu gałęzi, kontynuacja
+        builder.position_at_end(merge_block)
+        builder.ret_void()
+        
+    def visitCode_block(self, ctx, builder):
+        print(ctx.getText())
+        for i in range(1, ctx.getChildCount() - 1):
+            statement = ctx.getChild(i)
+            self.visitStatement_(statement, builder)
+        
+        
+    def visitStatement_(self, ctx, builder):
+        print(ctx.getText())
+        if ctx.variable_declaration():
+            self.visitVariable_declaration(ctx.variable_declaration(), builder)
+        elif ctx.assignment():
+            self.visitAssignment(ctx.assignment(), builder)
+        elif ctx.if_statement():
+            self.visitIf_statement(ctx.if_statement(), builder)
+        elif ctx.print_statement():
+            self.visitPrint_statement(ctx.print_statement(), builder)
+        else:
+            raise ValueError(f"Unknown statement: {ctx.getText()}")
+        
 
     def visitProgram(self, ctx):
         for statement in ctx.statement():
@@ -340,6 +463,7 @@ def compile(input_text):
     parser = SimpleLangParser(stream)
 
     tree = parser.program()
+    print(tree.toStringTree(recog=parser))
 
     visitor = SimpleLangIRVisitor()
     llvm_module = visitor.visitProgram(tree)

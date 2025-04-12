@@ -19,6 +19,11 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#if_statement.
+    def visitIf_statement(self, ctx:SimpleLangParser.If_statementContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SimpleLangParser#variable_declaration.
     def visitVariable_declaration(self, ctx:SimpleLangParser.Variable_declarationContext):
         return self.visitChildren(ctx)
@@ -89,8 +94,23 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#BoolCompareExpr.
+    def visitBoolCompareExpr(self, ctx:SimpleLangParser.BoolCompareExprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SimpleLangParser#BoolParens.
     def visitBoolParens(self, ctx:SimpleLangParser.BoolParensContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#comparizon_expression.
+    def visitComparizon_expression(self, ctx:SimpleLangParser.Comparizon_expressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#code_block.
+    def visitCode_block(self, ctx:SimpleLangParser.Code_blockContext):
         return self.visitChildren(ctx)
 
 
