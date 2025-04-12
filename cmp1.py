@@ -377,7 +377,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
             return ir.Constant(ir.IntType(1), int(result))
             
-    def visitIf_statement(self, ctx, builder = None):
+    def visitIf_statement(self, ctx, builder=None):
         end_fun = False
         if not builder:
             end_fun = True        
@@ -386,6 +386,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             self.generated_funcs.append(func.name)
             block = func.append_basic_block(name="entry")
             builder = ir.IRBuilder(block)
+        
         has_else_block = 'else' in ctx.getText() 
         
         # Stwórz nowy blok dla "if"
@@ -395,8 +396,6 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         # Stwórz nowy blok dla kontynuacji po "if"
         merge_block = builder.append_basic_block('merge')
 
-        for i in range(ctx.getChildCount()):
-            print(i, ctx.getChild(i).getText())
         # Warunkowe przejście
         builder.cbranch(self.visitBooleanExpression(ctx.getChild(1), builder), if_block, else_block)
 
@@ -415,8 +414,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         builder.position_at_end(merge_block)
         if end_fun:
             builder.ret_void()
-            
-    def visitLoop_while(self, ctx, builder = None):
+
+    def visitLoop_while(self, ctx, builder=None):
         end_fun = False
         if not builder:
             end_fun = True        
@@ -432,12 +431,13 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         
         builder.branch(loop_cond_block)
         
-        # Warunek pętli: np. ctx.getText() może zawierać wyrażenie typu boolean
+        # Warunek pętli
         builder.position_at_end(loop_cond_block)
-        builder.cbranch(self.visitBooleanExpression(ctx.getChild(1), builder), loop_body_block, loop_end_block)  # Jeśli warunek prawdziwy, przechodzimy do ciała pętli, w przeciwnym razie kończymy pętlę
+        condition = self.visitBooleanExpression(ctx.getChild(1), builder)
+        builder.cbranch(condition, loop_body_block, loop_end_block)  # Jeśli warunek prawdziwy, przechodzimy do ciała pętli, w przeciwnym razie kończymy pętlę
 
         builder.position_at_end(loop_body_block)
-        self.visitCode_block(ctx.getChild(2), builder) # Wykonaj instrukcje w ciele pętli
+        self.visitCode_block(ctx.getChild(2), builder)  # Wykonaj instrukcje w ciele pętli
         
         # Po wykonaniu ciała pętli, skaczemy z powrotem do bloku warunkowego
         builder.branch(loop_cond_block)
@@ -464,6 +464,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             self.visitIf_statement(ctx.if_statement(), builder)
         elif ctx.print_statement():
             self.visitPrint_statement(ctx.print_statement(), builder)
+        elif ctx.loop_while():
+            self.visitLoop_while(ctx.loop_while(), builder)
         else:
             raise ValueError(f"Unknown statement: {ctx.getText()}")
         
