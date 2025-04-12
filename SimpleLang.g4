@@ -6,7 +6,11 @@ statement: variable_declaration
          | assignment
          | print_statement
          | input_statement
+         | if_statement
+         | loop_while
          ;
+
+if_statement: 'if' boolean_expression code_block ('else' code_block)? ;
 
 variable_declaration: 'int' ID '=' NUMBER ';' 
                     | 'float' ID '=' FLOAT ';' 
@@ -32,7 +36,14 @@ boolean_expression: boolean_expression op=('AND' | 'OR' | 'XOR') boolean_express
                   | '(' boolean_expression ')'                                     # BoolParens
                   | BOOLEAN                                                        # BoolValue
                   | ID                                                             # BoolVariable
+                  | comparizon_expression                                          # BoolCompareExpr
                   ;
+
+comparizon_expression: expression op=('>'|'<'|'=='|'!='|'<='|'>=') expression ;   
+
+loop_while: 'while' boolean_expression code_block ;
+
+code_block: '{' statement+ '}' ;
 
 BOOLEAN: 'true' | 'false';
 ID: [a-zA-Z][a-zA-Z_0-9]*;

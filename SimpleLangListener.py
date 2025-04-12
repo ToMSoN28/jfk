@@ -26,6 +26,15 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#if_statement.
+    def enterIf_statement(self, ctx:SimpleLangParser.If_statementContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#if_statement.
+    def exitIf_statement(self, ctx:SimpleLangParser.If_statementContext):
+        pass
+
+
     # Enter a parse tree produced by SimpleLangParser#variable_declaration.
     def enterVariable_declaration(self, ctx:SimpleLangParser.Variable_declarationContext):
         pass
@@ -152,12 +161,48 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#BoolCompareExpr.
+    def enterBoolCompareExpr(self, ctx:SimpleLangParser.BoolCompareExprContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#BoolCompareExpr.
+    def exitBoolCompareExpr(self, ctx:SimpleLangParser.BoolCompareExprContext):
+        pass
+
+
     # Enter a parse tree produced by SimpleLangParser#BoolParens.
     def enterBoolParens(self, ctx:SimpleLangParser.BoolParensContext):
         pass
 
     # Exit a parse tree produced by SimpleLangParser#BoolParens.
     def exitBoolParens(self, ctx:SimpleLangParser.BoolParensContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#comparizon_expression.
+    def enterComparizon_expression(self, ctx:SimpleLangParser.Comparizon_expressionContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#comparizon_expression.
+    def exitComparizon_expression(self, ctx:SimpleLangParser.Comparizon_expressionContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#loop_while.
+    def enterLoop_while(self, ctx:SimpleLangParser.Loop_whileContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#loop_while.
+    def exitLoop_while(self, ctx:SimpleLangParser.Loop_whileContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#code_block.
+    def enterCode_block(self, ctx:SimpleLangParser.Code_blockContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#code_block.
+    def exitCode_block(self, ctx:SimpleLangParser.Code_blockContext):
         pass
 
 

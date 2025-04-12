@@ -1,2 +1,14 @@
-float a = 1.0;
-print(a);
+int a = 7;
+int b = 5;
+int i = 0;
+if a > b {
+    while i < a {
+        print(i);
+        i = i +1;
+    }
+}  else {
+    while i < b {
+        print(i);
+        i = i +1;
+    }
+}

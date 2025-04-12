@@ -9,9 +9,17 @@ Study project - own compilator
 * printing to screen (also equation)
 * short-circiut boolean evaluation
 * Makefile - make to compile and run code from code.txt
-* writing from screan
+* writing from screan (float)
 * Static text analysis on compilation level
+* if anf if_else statemant
+* while loop
 
 ## TODO
+loop
+list
+matrix
+string
+structures
+loop over list
 
 
