@@ -7,6 +7,7 @@ statement: variable_declaration
          | print_statement
          | input_statement
          | if_statement
+         | loop_while
          ;
 
 if_statement: 'if' boolean_expression code_block ('else' code_block)? ;
@@ -38,7 +39,9 @@ boolean_expression: boolean_expression op=('AND' | 'OR' | 'XOR') boolean_express
                   | comparizon_expression                                          # BoolCompareExpr
                   ;
 
-comparizon_expression: expression op=('>'|'<'|'=='|'!='|'<='|'>=') expression ;         
+comparizon_expression: expression op=('>'|'<'|'=='|'!='|'<='|'>=') expression ;   
+
+loop_while: 'while' boolean_expression code_block ;
 
 code_block: '{' statement+ '}' ;
 

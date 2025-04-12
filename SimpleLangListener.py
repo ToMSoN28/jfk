@@ -188,6 +188,15 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#loop_while.
+    def enterLoop_while(self, ctx:SimpleLangParser.Loop_whileContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#loop_while.
+    def exitLoop_while(self, ctx:SimpleLangParser.Loop_whileContext):
+        pass
+
+
     # Enter a parse tree produced by SimpleLangParser#code_block.
     def enterCode_block(self, ctx:SimpleLangParser.Code_blockContext):
         pass

@@ -109,6 +109,11 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#loop_while.
+    def visitLoop_while(self, ctx:SimpleLangParser.Loop_whileContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SimpleLangParser#code_block.
     def visitCode_block(self, ctx:SimpleLangParser.Code_blockContext):
         return self.visitChildren(ctx)

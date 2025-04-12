@@ -12,6 +12,7 @@ Study project - own compilator
 * writing from screan (float)
 * Static text analysis on compilation level
 * if anf if_else statemant
+* while loop
 
 ## TODO
 loop

@@ -68,7 +68,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             return self.symbol_print[fmt]
 
         # Debug: wypisz format, jeśli jeszcze nie istnieje
-        print(f"Creating global format string for: {fmt}")
+        # print(f"Creating global format string for: {fmt}")
 
         # Zakoduj jako UTF-8 + null terminator
         fmt_bytes = bytearray(fmt.encode("utf8")) + b"\00"
@@ -144,7 +144,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
     def visitPrint_statement(self, ctx, builder=None):
         expr_text = ctx.expression().getText()
-        print(expr_text)
+        # print(expr_text)
         end_fun = False
 
         if not builder:
@@ -377,13 +377,15 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
             return ir.Constant(ir.IntType(1), int(result))
             
-    def visitIf_statement(self, ctx):
-                
-        func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_ass_func_{self.function_counter}")
-        self.function_counter += 1
-        self.generated_funcs.append(func.name)
-        block = func.append_basic_block(name="entry")
-        builder = ir.IRBuilder(block)
+    def visitIf_statement(self, ctx, builder = None):
+        end_fun = False
+        if not builder:
+            end_fun = True        
+            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_if_func_{self.function_counter}")
+            self.function_counter += 1
+            self.generated_funcs.append(func.name)
+            block = func.append_basic_block(name="entry")
+            builder = ir.IRBuilder(block)
         has_else_block = 'else' in ctx.getText() 
         
         # Stwórz nowy blok dla "if"
@@ -411,17 +413,49 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
         # Po zakończeniu obu gałęzi, kontynuacja
         builder.position_at_end(merge_block)
-        builder.ret_void()
+        if end_fun:
+            builder.ret_void()
+            
+    def visitLoop_while(self, ctx, builder = None):
+        end_fun = False
+        if not builder:
+            end_fun = True        
+            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_while_func_{self.function_counter}")
+            self.function_counter += 1
+            self.generated_funcs.append(func.name)
+            block = func.append_basic_block(name="entry")
+            builder = ir.IRBuilder(block)
+            
+        loop_cond_block = builder.append_basic_block('loop_condition')  # Blok warunku
+        loop_body_block = builder.append_basic_block('loop_body')  # Blok ciała pętli
+        loop_end_block = builder.append_basic_block('loop_end')  # Blok końca pętli
+        
+        builder.branch(loop_cond_block)
+        
+        # Warunek pętli: np. ctx.getText() może zawierać wyrażenie typu boolean
+        builder.position_at_end(loop_cond_block)
+        builder.cbranch(self.visitBooleanExpression(ctx.getChild(1), builder), loop_body_block, loop_end_block)  # Jeśli warunek prawdziwy, przechodzimy do ciała pętli, w przeciwnym razie kończymy pętlę
+
+        builder.position_at_end(loop_body_block)
+        self.visitCode_block(ctx.getChild(2), builder) # Wykonaj instrukcje w ciele pętli
+        
+        # Po wykonaniu ciała pętli, skaczemy z powrotem do bloku warunkowego
+        builder.branch(loop_cond_block)
+        
+        builder.position_at_end(loop_end_block)
+        if end_fun:
+            builder.ret_void()
+        
         
     def visitCode_block(self, ctx, builder):
-        print(ctx.getText())
+        # print(ctx.getText())
         for i in range(1, ctx.getChildCount() - 1):
             statement = ctx.getChild(i)
             self.visitStatement_(statement, builder)
         
         
     def visitStatement_(self, ctx, builder):
-        print(ctx.getText())
+        # print(ctx.getText())
         if ctx.variable_declaration():
             self.visitVariable_declaration(ctx.variable_declaration(), builder)
         elif ctx.assignment():
