@@ -54,6 +54,11 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#FuncCallNum.
+    def visitFuncCallNum(self, ctx:SimpleLangParser.FuncCallNumContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SimpleLangParser#MulDiv.
     def visitMulDiv(self, ctx:SimpleLangParser.MulDivContext):
         return self.visitChildren(ctx)
@@ -94,6 +99,11 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#FuncCallBool.
+    def visitFuncCallBool(self, ctx:SimpleLangParser.FuncCallBoolContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SimpleLangParser#BoolCompareExpr.
     def visitBoolCompareExpr(self, ctx:SimpleLangParser.BoolCompareExprContext):
         return self.visitChildren(ctx)
@@ -114,8 +124,38 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#function_definition.
+    def visitFunction_definition(self, ctx:SimpleLangParser.Function_definitionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#parametr_list.
+    def visitParametr_list(self, ctx:SimpleLangParser.Parametr_listContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SimpleLangParser#code_block.
     def visitCode_block(self, ctx:SimpleLangParser.Code_blockContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#func_call.
+    def visitFunc_call(self, ctx:SimpleLangParser.Func_callContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#argument_list.
+    def visitArgument_list(self, ctx:SimpleLangParser.Argument_listContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#return_statement.
+    def visitReturn_statement(self, ctx:SimpleLangParser.Return_statementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#type.
+    def visitType(self, ctx:SimpleLangParser.TypeContext):
         return self.visitChildren(ctx)
 
 

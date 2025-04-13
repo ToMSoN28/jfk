@@ -18,6 +18,9 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         self.symbol_print = {}
         self.function_counter = 0
         self.generated_funcs = []
+        self.local_symbol_table = {}  # dict: nazwa_funkcji -> {nazwa_zmiennej: ptr}
+        self.current_function = None  # aktualnie odwiedzana funkcja
+
         self.printf = None
         self._declare_printf()
         self._declare_scanf()
@@ -88,7 +91,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
         return global_fmt
 
-    def visitVariable_declaration(self, ctx):
+    def visitVariable_declaration(self, ctx, builder = None):
 
         var_name = ctx.ID().getText()
         if var_name == "<missing ID>":
@@ -107,19 +110,32 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 initializer = ir.Constant(llvm_type, 0)
         else:
             raise ValueError(f"Unsupported type for variable: {var_name}")
-
-        global_var = ir.GlobalVariable(self.module, llvm_type, var_name)
-        global_var.initializer = initializer
-        global_var.linkage = 'internal'
-        global_var.global_constant = False
-        self.symbol_table[var_name] = global_var
+        
+        if not builder:
+            global_var = ir.GlobalVariable(self.module, llvm_type, var_name)
+            global_var.initializer = initializer
+            global_var.linkage = 'internal'
+            global_var.global_constant = False
+            self.symbol_table[var_name] = global_var
+        else:
+            print('hello from local var_declaraction')
+            ptr = builder.alloca(llvm_type, name=var_name)
+            builder.store(initializer, ptr)
+            self.local_symbol_table[self.current_function][var_name] = ptr
+        
 
     def visitAssignment(self, ctx, builder=None):
         var_name = ctx.ID().getText()
-        if var_name not in self.symbol_table:
+        if self.current_function:
+            if var_name not in self.local_symbol_table.get(self.current_function, {}):
+                raise ValueError(f"Variable '{var_name}' is not declared in function {self.current_function}")
+        elif var_name not in self.symbol_table:
             raise ValueError(f"Variable '{var_name}' is not declared")
-
-        global_var = self.symbol_table[var_name]
+        
+        if self.current_function:
+            var = self.local_symbol_table[self.current_function][var_name]
+        else:
+            var = self.symbol_table[var_name]
         end_fun = False
         
         if not builder:
@@ -137,7 +153,7 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             value = self.visitBooleanExpression(ctx.boolean_expression(), builder)
 
         if value is not None:
-            builder.store(value, global_var)
+            builder.store(value, var)
 
         if end_fun:
             builder.ret_void()
@@ -180,9 +196,23 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 return ir.Constant(ir.IntType(32), int(text))
             elif '.' in text:
                 return ir.Constant(ir.DoubleType(), float(text))
+            elif self.current_function and text in self.local_symbol_table.get(self.current_function, {}):
+                ptr = self.local_symbol_table[self.current_function][text]
+                return builder.load(ptr)
             elif text in self.symbol_table:
                 global_var = self.symbol_table[text]
                 return builder.load(global_var)
+            elif ctx.func_call():
+                name = ctx.func_call().ID().getText()
+                args = []
+                call = ctx.func_call()
+                if call.argument_list():
+                    for expr in call.argument_list().expression():
+                        args.append(self.visitExpression(expr, builder))
+                    for bexpr in call.argument_list().boolean_expression():
+                        args.append(self.visitBooleanExpression(bexpr, builder))
+                func = self.module.get_global(name)
+                return builder.call(func, args)
             else:
                 raise ValueError(f"Unknown identifier: {text}")
 
@@ -215,6 +245,9 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 return ir.Constant(ir.IntType(1), 1)
             elif text == "false":
                 return ir.Constant(ir.IntType(1), 0)
+            elif self.current_function and text in self.local_symbol_table.get(self.current_function, {}):
+                ptr = self.local_symbol_table[self.current_function][text]
+                return builder.load(ptr)
             elif text in self.symbol_table:
                 global_var = self.symbol_table[text]
                 if builder:
@@ -227,6 +260,20 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                         return ir.Constant(ir.IntType(1), 0)  # Fallback if no initializer
             elif ctx.getChild(0) == ctx.comparizon_expression():
                 return self.visitComparizon_expression(ctx.comparizon_expression(), builder)
+            elif ctx.func_call():
+                name = ctx.func_call().ID().getText()
+                args = []
+                call = ctx.func_call()
+                if call.argument_list():
+                    for expr in call.argument_list().expression():
+                        args.append(self.visitExpression(expr, builder))
+                    for bexpr in call.argument_list().boolean_expression():
+                        args.append(self.visitBooleanExpression(bexpr, builder))
+
+                func = self.module.get_global(name)
+                if not builder:
+                    raise ValueError("Builder is required for function calls")
+                return builder.call(func, args)
             else:
                 raise ValueError(f"Unknown boolean value: {text}")
 
@@ -402,13 +449,17 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         # Wykonaj kod dla "if"
         builder.position_at_end(if_block)
         self.visitCode_block(ctx.getChild(2), builder)  # Jeśli warunek spełniony
-        builder.branch(merge_block)  # Przejdź do "merge_block" po wykonaniu kodu w if
+        if not builder.block.is_terminated:
+            builder.branch(merge_block)
+        # builder.branch(merge_block)  # Przejdź do "merge_block" po wykonaniu kodu w if
 
         # Wykonaj kod dla "else"
         builder.position_at_end(else_block)
         if ctx.getChildCount() > 3:
             self.visitCode_block(ctx.getChild(4), builder)   # Jeśli warunek niespełniony
-        builder.branch(merge_block)  # Po wykonaniu kodu w else, przejdź do "merge_block"
+        if not builder.block.is_terminated:
+            builder.branch(merge_block)
+        # builder.branch(merge_block)  # Po wykonaniu kodu w else, przejdź do "merge_block"
 
         # Po zakończeniu obu gałęzi, kontynuacja
         builder.position_at_end(merge_block)
@@ -440,20 +491,96 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         self.visitCode_block(ctx.getChild(2), builder)  # Wykonaj instrukcje w ciele pętli
         
         # Po wykonaniu ciała pętli, skaczemy z powrotem do bloku warunkowego
-        builder.branch(loop_cond_block)
+        if not builder.block.is_terminated:
+            builder.branch(loop_cond_block)
+        # builder.branch(loop_cond_block)
         
         builder.position_at_end(loop_end_block)
         if end_fun:
             builder.ret_void()
         
+    def visitFunction_definition(self, ctx):
+        return_type_str = ctx.getChild(1).getText()
+        func_name = ctx.ID().getText()
+        param_nodes = ctx.parametr_list().children if ctx.parametr_list() else []
+        self.current_function = func_name
+        self.local_symbol_table[func_name] = {} 
+
+        # Pobierz typy i nazwy parametrów
+        params = []
+        llvm_types = []
+        i = 0
+        while i < len(param_nodes):
+            if param_nodes[i].getText() in ['int', 'float', 'bool']:
+                typ = param_nodes[i].getText()
+                name = param_nodes[i + 1].getText()
+                if typ == 'int':
+                    llvm_type = ir.IntType(32)
+                elif typ == 'float':
+                    llvm_type = ir.DoubleType()
+                elif typ == 'bool':
+                    llvm_type = ir.IntType(1)
+                else:
+                    raise ValueError(f"Unknown param type: {typ}")
+                llvm_types.append(llvm_type)
+                params.append((name, llvm_type))
+                i += 2
+            else:
+                i += 1
+
+        # Typ zwracany
+        if return_type_str == 'int':
+            return_type = ir.IntType(32)
+        elif return_type_str == 'float':
+            return_type = ir.DoubleType()
+        elif return_type_str == 'bool':
+            return_type = ir.IntType(1)
+        else:
+            raise ValueError(f"Unknown return type: {return_type_str}")
+
+        # Stwórz funkcję
+        func_type = ir.FunctionType(return_type, llvm_types)
+        func = ir.Function(self.module, func_type, name=func_name)
+        block = func.append_basic_block(name="entry")
+        builder = ir.IRBuilder(block)
+
+        # Zainicjalizuj parametry w symbol_table
+        for i, (name, typ) in enumerate(params):
+            ptr = builder.alloca(typ, name=name)
+            builder.store(func.args[i], ptr)
+            self.symbol_table[name] = ptr
+
+        # Zbuduj ciało funkcji
+        ret_val = self.visitCode_block(ctx.code_block(), builder)
+
+        # Jeśli nie ma jawnego return, domyślnie zwróć 0/0.0/false
+        if not builder.block.is_terminated:
+            if return_type == ir.IntType(32):
+                builder.ret(ir.Constant(ir.IntType(32), 0))
+            elif return_type == ir.DoubleType():
+                builder.ret(ir.Constant(ir.DoubleType(), 0.0))
+            elif return_type == ir.IntType(1):
+                builder.ret(ir.Constant(ir.IntType(1), 0))
+
+        self.current_function = None  # Resetuj aktualną funkcję
+        return func
+    
+    def visitReturn_statement(self, ctx, builder):
+        if ctx.expression():
+            retval = self.visitExpression(ctx.expression(), builder)
+            builder.ret(retval)
+        elif ctx.boolean_expression():
+            retval = self.visitBooleanExpression(ctx.boolean_expression(), builder)
+            builder.ret(retval)
+        else:
+            builder.ret_void()
         
     def visitCode_block(self, ctx, builder):
         # print(ctx.getText())
         for i in range(1, ctx.getChildCount() - 1):
             statement = ctx.getChild(i)
             self.visitStatement_(statement, builder)
-        
-        
+               
     def visitStatement_(self, ctx, builder):
         # print(ctx.getText())
         if ctx.variable_declaration():
@@ -466,11 +593,16 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             self.visitPrint_statement(ctx.print_statement(), builder)
         elif ctx.loop_while():
             self.visitLoop_while(ctx.loop_while(), builder)
+        elif ctx.return_statement():
+            self.visitReturn_statement(ctx.return_statement(), builder)
         else:
             raise ValueError(f"Unknown statement: {ctx.getText()}")
         
 
     def visitProgram(self, ctx):
+        for func_def in ctx.function_definition():
+            self.visitFunction_definition(func_def)
+        
         for statement in ctx.statement():
             self.visit(statement)
 
