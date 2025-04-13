@@ -1,4 +1,3 @@
-
 func int max (int a, int b) {
     int i = 0;
     if a > b {
