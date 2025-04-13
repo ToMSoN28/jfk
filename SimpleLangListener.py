@@ -89,6 +89,15 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#FuncCallNum.
+    def enterFuncCallNum(self, ctx:SimpleLangParser.FuncCallNumContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#FuncCallNum.
+    def exitFuncCallNum(self, ctx:SimpleLangParser.FuncCallNumContext):
+        pass
+
+
     # Enter a parse tree produced by SimpleLangParser#MulDiv.
     def enterMulDiv(self, ctx:SimpleLangParser.MulDivContext):
         pass
@@ -161,6 +170,15 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#FuncCallBool.
+    def enterFuncCallBool(self, ctx:SimpleLangParser.FuncCallBoolContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#FuncCallBool.
+    def exitFuncCallBool(self, ctx:SimpleLangParser.FuncCallBoolContext):
+        pass
+
+
     # Enter a parse tree produced by SimpleLangParser#BoolCompareExpr.
     def enterBoolCompareExpr(self, ctx:SimpleLangParser.BoolCompareExprContext):
         pass
@@ -197,12 +215,66 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#function_definition.
+    def enterFunction_definition(self, ctx:SimpleLangParser.Function_definitionContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#function_definition.
+    def exitFunction_definition(self, ctx:SimpleLangParser.Function_definitionContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#parametr_list.
+    def enterParametr_list(self, ctx:SimpleLangParser.Parametr_listContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#parametr_list.
+    def exitParametr_list(self, ctx:SimpleLangParser.Parametr_listContext):
+        pass
+
+
     # Enter a parse tree produced by SimpleLangParser#code_block.
     def enterCode_block(self, ctx:SimpleLangParser.Code_blockContext):
         pass
 
     # Exit a parse tree produced by SimpleLangParser#code_block.
     def exitCode_block(self, ctx:SimpleLangParser.Code_blockContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#func_call.
+    def enterFunc_call(self, ctx:SimpleLangParser.Func_callContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#func_call.
+    def exitFunc_call(self, ctx:SimpleLangParser.Func_callContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#argument_list.
+    def enterArgument_list(self, ctx:SimpleLangParser.Argument_listContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#argument_list.
+    def exitArgument_list(self, ctx:SimpleLangParser.Argument_listContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#return_statement.
+    def enterReturn_statement(self, ctx:SimpleLangParser.Return_statementContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#return_statement.
+    def exitReturn_statement(self, ctx:SimpleLangParser.Return_statementContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#type.
+    def enterType(self, ctx:SimpleLangParser.TypeContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#type.
+    def exitType(self, ctx:SimpleLangParser.TypeContext):
         pass
 
 

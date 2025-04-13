@@ -1,6 +1,6 @@
 grammar SimpleLang;
 
-program: statement+;
+program: (function_definition | statement)+;
 
 statement: variable_declaration
          | assignment
@@ -8,6 +8,7 @@ statement: variable_declaration
          | input_statement
          | if_statement
          | loop_while
+         | return_statement
          ;
 
 if_statement: 'if' boolean_expression code_block ('else' code_block)? ;
@@ -17,7 +18,8 @@ variable_declaration: 'int' ID '=' NUMBER ';'
                     | 'bool' ID '=' boolean_expression ';' ;
 
 assignment: ID '=' expression ';' 
-          | ID '=' boolean_expression ';' ;
+          | ID '=' boolean_expression ';' 
+          ;
 
 print_statement: 'print' '(' (expression | boolean_expression) ')' ';' ;
 
@@ -29,6 +31,7 @@ expression: expression op=('*'|'/') expression # MulDiv
           | NUMBER                               # Number
           | FLOAT                                # FloatNumber
           | ID                                   # Variable
+          | func_call                            # FuncCallNum
           ;
 
 boolean_expression: boolean_expression op=('AND' | 'OR' | 'XOR') boolean_expression # BoolBinaryOp
@@ -37,14 +40,26 @@ boolean_expression: boolean_expression op=('AND' | 'OR' | 'XOR') boolean_express
                   | BOOLEAN                                                        # BoolValue
                   | ID                                                             # BoolVariable
                   | comparizon_expression                                          # BoolCompareExpr
+                  | func_call                                                      # FuncCallBool
                   ;
 
 comparizon_expression: expression op=('>'|'<'|'=='|'!='|'<='|'>=') expression ;   
 
 loop_while: 'while' boolean_expression code_block ;
 
+function_definition: 'func' type ID '(' parametr_list? ')' code_block ;
+
+parametr_list: type ID (',' type ID)* ;
+
 code_block: '{' statement+ '}' ;
 
+func_call: ID '(' argument_list? ')' ;
+
+argument_list: (expression | boolean_expression) (',' (expression | boolean_expression))* ;
+
+return_statement: 'return' (expression | boolean_expression)? ';' ;
+
+type: 'int' | 'float' | 'bool' ;
 BOOLEAN: 'true' | 'false';
 ID: [a-zA-Z][a-zA-Z_0-9]*;
 NUMBER: [0-9]+;
