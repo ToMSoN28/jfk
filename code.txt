@@ -1,3 +1,8 @@
+string str = "Hello";
+print(str);
+str = "Word";
+print(str);
+print("str");
 func int max (int a, int b) {
     int i = 0;
     if a > b {

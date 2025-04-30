@@ -108,6 +108,25 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             initializer = self.visitBooleanExpression(ctx.boolean_expression(), None)
             if not isinstance(initializer, ir.Constant):
                 initializer = ir.Constant(llvm_type, 0)
+        elif ctx.STRING():
+            text = ctx.STRING().getText()[1:-1] + '\0'  # dodaj null terminator
+            str_bytes = bytearray(text.encode("utf8"))
+            str_type = ir.ArrayType(ir.IntType(8), len(str_bytes))
+
+            global_str = ir.GlobalVariable(self.module, str_type, name=f".str.{var_name}")
+            global_str.linkage = 'internal'
+            global_str.global_constant = True
+            global_str.initializer = ir.Constant(str_type, str_bytes)
+
+            ptr_type = ir.IntType(8).as_pointer()
+            
+            if not builder:
+                self.symbol_table[var_name] = global_str.bitcast(ptr_type)
+            else:
+                ptr = builder.alloca(ptr_type, name=var_name)
+                builder.store(global_str.bitcast(ptr_type), ptr)
+                self.local_symbol_table[self.current_function][var_name] = ptr
+            return
         else:
             raise ValueError(f"Unsupported type for variable: {var_name}")
         
@@ -147,7 +166,21 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             builder = ir.IRBuilder(block)
 
         value = None
-        if ctx.expression():
+        
+        if ctx.STRING():
+            # Obsługa przypisania stringa
+            text = ctx.STRING().getText()[1:-1] + '\0'
+            str_bytes = bytearray(text.encode("utf8"))
+            str_type = ir.ArrayType(ir.IntType(8), len(str_bytes))
+
+            global_str = ir.GlobalVariable(self.module, str_type, name=f".str.{var_name}.{self.function_counter}")
+            global_str.linkage = 'internal'
+            global_str.global_constant = True
+            global_str.initializer = ir.Constant(str_type, str_bytes)
+
+            ptr_type = ir.IntType(8).as_pointer()
+            value = builder.bitcast(global_str, ptr_type)
+        elif ctx.expression():
             value = self.visitExpression(ctx.expression(), builder)
         elif ctx.boolean_expression():
             value = self.visitBooleanExpression(ctx.boolean_expression(), builder)
@@ -159,8 +192,6 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             builder.ret_void()
 
     def visitPrint_statement(self, ctx, builder=None):
-        expr_text = ctx.expression().getText()
-        # print(expr_text)
         end_fun = False
 
         if not builder:
@@ -171,16 +202,66 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             block = func.append_basic_block(name="entry")
             builder = ir.IRBuilder(block)
 
-        value = self.visitExpression(ctx.expression(), builder)
-        if isinstance(value.type, ir.IntType) and value.type.width == 32:
-            fmt = "%d\n"
-        elif isinstance(value.type, ir.DoubleType):
-            fmt = "%f\n"
-        elif isinstance(value.type, ir.IntType) and value.type.width == 1:
+        value = None
+        fmt = None
+
+        # --- STRING literal
+        if ctx.STRING():
+            text = ctx.STRING().getText()[1:-1] + '\0'
+            str_bytes = bytearray(text.encode("utf8"))
+            str_type = ir.ArrayType(ir.IntType(8), len(str_bytes))
+
+            global_str = ir.GlobalVariable(self.module, str_type, name=f".str.print.{self.function_counter}")
+            global_str.linkage = 'internal'
+            global_str.global_constant = True
+            global_str.initializer = ir.Constant(str_type, str_bytes)
+
+            value = builder.bitcast(global_str, ir.IntType(8).as_pointer())
+            fmt = "%s\n"
+
+        # --- Zmienna typu string
+        elif ctx.ID():
+            var_name = ctx.ID().getText()
+            if self.current_function:
+                var_ptr = self.local_symbol_table[self.current_function].get(var_name)
+            else:
+                var_ptr = self.symbol_table.get(var_name)
+            if var_ptr is None:
+                raise ValueError(f"Variable '{var_name}' is not declared")
+            pointee_type = var_ptr.type.pointee
+            is_string = (
+                            isinstance(pointee_type, ir.ArrayType) and isinstance(pointee_type.element, ir.IntType) and pointee_type.element.width == 8
+                        ) or (
+                            isinstance(pointee_type, ir.IntType) and pointee_type.width == 8
+                        ) or (
+                            isinstance(pointee_type, ir.PointerType) and isinstance(pointee_type.pointee, ir.IntType) and pointee_type.pointee.width == 8
+                        )
+            if is_string:
+                value = builder.load(var_ptr)
+                fmt = "%s\n"
+        
+        elif ctx.boolean_expression():
+            value = self.visitBooleanExpression(ctx.boolean_expression(), builder)
             fmt = "%d\n"
             value = builder.zext(value, ir.IntType(32))
+
+        # --- Wyrażenie (int, float, bool)
+        if ctx.expression() or fmt is None:
+            value = self.visitExpression(ctx.expression(), builder)
+            if isinstance(value.type, ir.IntType) and value.type.width == 32:
+                fmt = "%d\n"
+            elif isinstance(value.type, ir.DoubleType):
+                fmt = "%f\n"
+            elif isinstance(value.type, ir.IntType) and value.type.width == 1:
+                fmt = "%d\n"
+                value = builder.zext(value, ir.IntType(32))
+            else:
+                raise ValueError(f"Unsupported type for print: {value.type}")
+
+        # --- Wyrażenie booleanowe
+    
         else:
-            raise ValueError(f"Unsupported type for print: {value.type}")
+            raise ValueError("Unknown expression in print")
 
         fmt_var = self._create_global_format_str(fmt)
         fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
