@@ -202,8 +202,10 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
         elif ctx.ID():  # 🔧 ZMIANA
             var_name = ctx.ID().getText()
+            print(self.current_function)
             if self.current_function:
                 var_ptr = self.local_symbol_table[self.current_function].get(var_name)
+                print(f"Local variable '{var_name}' found in function '{self.current_function}'")
             else:
                 var_ptr = self.symbol_table.get(var_name)
             if var_ptr is None:
