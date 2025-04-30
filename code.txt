@@ -4,8 +4,9 @@ str = "Word";
 print(str);
 print("str");
 
-func int max (int a, int b) {
+func int max (int a, int b, string tmp0) {
     int i = 0;
+    print(tmp0);
     if a > b {
         while i < a {
             print(i*a);
@@ -21,5 +22,5 @@ func int max (int a, int b) {
     }
 }
 int res = 0;
-res = max(5, 10);
+res = max(5, 10, str);
 print(res);

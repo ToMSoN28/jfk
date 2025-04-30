@@ -224,7 +224,11 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             value = builder.zext(value, ir.IntType(32))
 
         if ctx.expression() or fmt is None:
-            value = self.visitExpression(ctx.expression(), builder)
+            if ctx.expression():
+                value = self.visitExpression(ctx.expression(), builder)
+            else:
+                value = self.visitExpression(ctx.ID(), builder)
+            print(value)
             if isinstance(value.type, ir.IntType) and value.type.width == 32:
                 fmt = "%d\n"
             elif isinstance(value.type, ir.DoubleType):
@@ -244,7 +248,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
 
     def visitExpression(self, ctx, builder):
-        if ctx.getChildCount() == 1:
+        print(ctx.getText())
+        if ctx.getChildCount() == 1 or ctx.getChildCount() == 0:
             text = ctx.getText()
             if text.isdigit():
                 return ir.Constant(ir.IntType(32), int(text))
