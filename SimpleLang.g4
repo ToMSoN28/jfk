@@ -15,13 +15,16 @@ if_statement: 'if' boolean_expression code_block ('else' code_block)? ;
 
 variable_declaration: 'int' ID '=' NUMBER ';' 
                     | 'float' ID '=' FLOAT ';' 
-                    | 'bool' ID '=' boolean_expression ';' ;
+                    | 'bool' ID '=' boolean_expression ';' 
+                    | 'string' ID '=' STRING ';'
+                    ;
 
 assignment: ID '=' expression ';' 
           | ID '=' boolean_expression ';' 
+          | ID '=' STRING ';'
           ;
 
-print_statement: 'print' '(' (expression | boolean_expression) ')' ';' ;
+print_statement: 'print' '(' (ID | expression | boolean_expression | STRING ) ')' ';' ;
 
 input_statement: ID '=' 'input' '(' ')' ';' ;
 
@@ -59,7 +62,8 @@ argument_list: (expression | boolean_expression) (',' (expression | boolean_expr
 
 return_statement: 'return' (expression | boolean_expression)? ';' ;
 
-type: 'int' | 'float' | 'bool' ;
+type: 'int' | 'float' | 'bool' | 'string';
+STRING: '"' (~["\\] | '\\' .)* '"';
 BOOLEAN: 'true' | 'false';
 ID: [a-zA-Z][a-zA-Z_0-9]*;
 NUMBER: [0-9]+;
