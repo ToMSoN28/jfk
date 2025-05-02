@@ -15,13 +15,12 @@ Study project - own compilator
 * while loop
 * declaration of function that returns value (int, float, bool)
 * string: declaration, printing, assigning
+* table: declaration, assigning whole (must afret dclaration), assiging single value, accesing single value, printing whole table
 
 ## TODO
-list,
 matrix,
--string,-
 structures,
-loop over list (iterator)
+loop over list (iterator) TK
 
 ## Working code
 ```
