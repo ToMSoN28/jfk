@@ -9,6 +9,8 @@ statement: variable_declaration
          | if_statement
          | loop_while
          | return_statement
+         | table_declaration
+         | table_assignment
          ;
 
 if_statement: 'if' boolean_expression code_block ('else' code_block)? ;
@@ -19,10 +21,16 @@ variable_declaration: 'int' ID '=' NUMBER ';'
                     | 'string' ID '=' STRING ';'
                     ;
 
+table_declaration: type '[' NUMBER ']' ID ';' ;
+
 assignment: ID '=' expression ';' 
           | ID '=' boolean_expression ';' 
           | ID '=' STRING ';'
           ;
+
+table_assignment: ID '=' '[' expression (',' expression)* ']' ';'                  
+                | ID '[' expression ']' '=' expression ';'                         
+                ;
 
 print_statement: 'print' '(' (ID | expression | boolean_expression | STRING ) ')' ';' ;
 
@@ -35,6 +43,7 @@ expression: expression op=('*'|'/') expression # MulDiv
           | FLOAT                                # FloatNumber
           | ID                                   # Variable
           | func_call                            # FuncCallNum
+          | ID '[' expression ']'                # TableElem
           ;
 
 boolean_expression: boolean_expression op=('AND' | 'OR' | 'XOR') boolean_expression # BoolBinaryOp

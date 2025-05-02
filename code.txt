@@ -5,6 +5,8 @@ print(str);
 print("str");
 
 func int max (int a, int b) {
+    int [20] table;
+    table = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
     int i = 0;
     string t = "A jest wiksze od B";
     string n = "B jest wiksze od A";
@@ -12,20 +14,24 @@ func int max (int a, int b) {
         print(t);
         while i < a {
             print(i*a);
+            table[i] = i*a;
             i = i+1;
         }
+        print(table);
         return a;
     } else {
         print(n);
         while i < b {
             print(i*b);
+            table[i] = i*b;
             i = i+1;
         }
+        print(table);
         return b;
     }
 }
 int a = 5;
-int b = 10;
+int b = 7;
 int res = 0;
 res = max(a, b);
 print(res);

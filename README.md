@@ -14,33 +14,51 @@ Study project - own compilator
 * if anf if_else statemant
 * while loop
 * declaration of function that returns value (int, float, bool)
+* string: declaration, printing, assigning
+* table: declaration, assigning whole (must afret dclaration), assiging single value, accesing single value, printing whole table
 
 ## TODO
-list,
 matrix,
-string,
 structures,
-loop over list
+loop over list (iterator) TK
 
 ## Working code
 ```
+string str = "Hello";
+print(str);
+str = "Word";
+print(str);
+print("str");
+
 func int max (int a, int b) {
+    int [20] table;
+    table = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
     int i = 0;
+    string t = "A jest wiksze od B";
+    string n = "B jest wiksze od A";
     if a > b {
+        print(t);
         while i < a {
             print(i*a);
+            table[i] = i*a;
             i = i+1;
         }
+        print(table);
         return a;
     } else {
+        print(n);
         while i < b {
             print(i*b);
+            table[i] = i*b;
             i = i+1;
         }
+        print(table);
         return b;
     }
 }
+int a = 5;
+int b = 7;
 int res = 0;
-res = max(5, 10);
+res = max(a, b);
 print(res);
 ```
