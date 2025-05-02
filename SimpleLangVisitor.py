@@ -29,8 +29,18 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#table_declaration.
+    def visitTable_declaration(self, ctx:SimpleLangParser.Table_declarationContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SimpleLangParser#assignment.
     def visitAssignment(self, ctx:SimpleLangParser.AssignmentContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#table_assignment.
+    def visitTable_assignment(self, ctx:SimpleLangParser.Table_assignmentContext):
         return self.visitChildren(ctx)
 
 
@@ -76,6 +86,11 @@ class SimpleLangVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SimpleLangParser#FloatNumber.
     def visitFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#TableElem.
+    def visitTableElem(self, ctx:SimpleLangParser.TableElemContext):
         return self.visitChildren(ctx)
 
 

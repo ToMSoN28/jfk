@@ -132,7 +132,75 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             builder.store(initializer, ptr)
             self.local_symbol_table[self.current_function][var_name] = ptr
 
+    def visitTable_declaration(self, ctx, builder=None):
+        element_type = ctx.getChild(0).getText()
+        array_name = ctx.ID().getText()
+        size = int(ctx.NUMBER().getText())
+
+        if element_type == "int":
+            llvm_type = ir.IntType(32)
+        elif element_type == "float":
+            llvm_type = ir.DoubleType()
+        elif element_type == "bool":
+            llvm_type = ir.IntType(1)
+        else:
+            raise ValueError(f"Unsupported array type: {element_type}")
+
+        array_type = ir.ArrayType(llvm_type, size)
+
+        if builder:
+            ptr = builder.alloca(array_type, name=array_name)
+            self.local_symbol_table[self.current_function][array_name] = ptr
+        else:
+            global_array = ir.GlobalVariable(self.module, array_type, name=array_name)
+            global_array.linkage = 'internal'
+            global_array.initializer = ir.Constant(array_type, None)
+            self.symbol_table[array_name] = global_array   
+            
+    def visitTable_assignment(self, ctx, builder=None):
+        print(ctx.getText())
+        var_name = ctx.ID().getText()
+
+        if self.current_function:
+            table_ptr = self.local_symbol_table[self.current_function].get(var_name)
+        else:
+            table_ptr = self.symbol_table.get(var_name)
+
+        if table_ptr is None:
+            raise ValueError(f"Table '{var_name}' is not declared")
         
+        end_fun = False
+        if not builder:
+            end_fun = True
+            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_ass_func_{self.function_counter}")
+            self.function_counter += 1
+            self.generated_funcs.append(func.name)
+            block = func.append_basic_block(name="entry")
+            builder = ir.IRBuilder(block)
+            print(f'new block: {end_fun}')
+
+        if ctx.getChild(1).getText() == '=':  # Cała tablica
+            values = ctx.expression()
+            n = len(values)
+
+            array_type = table_ptr.type.pointee
+            if isinstance(array_type, ir.ArrayType) and n != array_type.count:
+                raise ValueError(f"Wrong number of elements for table {var_name}")
+
+            for i, val_ctx in enumerate(values):
+                value = self.visitExpression(val_ctx, builder)
+                ptr = builder.gep(table_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+                builder.store(value, ptr)
+
+        else:  # Pojedynczy element
+            index = self.visitExpression(ctx.expression(0), builder)
+            value = self.visitExpression(ctx.expression(1), builder)
+            ptr = builder.gep(table_ptr, [ir.Constant(ir.IntType(32), 0), index])
+            builder.store(value, ptr)
+            
+        if end_fun:
+            builder.ret_void()
+ 
 
     def visitAssignment(self, ctx, builder=None):
         var_name = ctx.ID().getText()
@@ -219,11 +287,45 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             if is_string:
                 value = builder.load(var_ptr)
                 fmt = "%s\n"
+                
+             # 📦 Obsługa tablic
+            if isinstance(pointee_type, ir.ArrayType):
+                elem_type = pointee_type.element
+                length = pointee_type.count
+
+                fmt = {
+                    ir.IntType(32): "%d ",
+                    ir.DoubleType(): "%f ",
+                    ir.IntType(1): "%d ",
+                }.get(elem_type, None)
+
+                if fmt is None:
+                    raise ValueError(f"Unsupported array element type: {elem_type}")
+
+                fmt_var = self._create_global_format_str(fmt)
+                fmt_ptr = builder.bitcast(fmt_var, ir.IntType(8).as_pointer())
+
+                for i in range(length):
+                    elem_ptr = builder.gep(var_ptr, [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), i)])
+                    val = builder.load(elem_ptr)
+                    if isinstance(val.type, ir.IntType) and val.type.width == 1:
+                        val = builder.zext(val, ir.IntType(32))  # rozszerz bool do int32
+                    builder.call(self.printf, [fmt_ptr, val])
+
+                # nowa linia po tablicy
+                newline_fmt = self._create_global_format_str("\n")
+                newline_ptr = builder.bitcast(newline_fmt, ir.IntType(8).as_pointer())
+                builder.call(self.printf, [newline_ptr])
+                if end_fun:
+                    builder.ret_void()
+                return  # ⬅ uniknij dalszego kodu
+
 
         elif ctx.boolean_expression():
             value = self.visitBooleanExpression(ctx.boolean_expression(), builder)
             fmt = "%d\n"
             value = builder.zext(value, ir.IntType(32))
+        
 
         if ctx.expression() or fmt is None:
             if ctx.expression():
@@ -247,7 +349,6 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
         if end_fun:
             builder.ret_void()
-
 
     def visitExpression(self, ctx, builder):
         print(ctx.getText())
@@ -298,6 +399,27 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 return builder.sdiv(left, right) if is_int else builder.fdiv(left, right)
             else:
                 raise ValueError(f"Unsupported binary operator: {op}")
+        
+        elif len(ctx.children) >= 4 and ctx.getChild(0).getText().isidentifier() and ctx.getChild(1).getText() == "[":
+            # Wypisywanie elementu tablicy: print(arr[1])
+            var_name = ctx.getChild(0).getText()
+            index_expr = ctx.getChild(2)
+            index = self.visitExpression(index_expr, builder)
+
+            if self.current_function:
+                array_ptr = self.local_symbol_table[self.current_function].get(var_name)
+            else:
+                array_ptr = self.symbol_table.get(var_name)
+
+            if array_ptr is None:
+                raise ValueError(f"Array '{var_name}' is not declared")
+
+            array_type = array_ptr.type.pointee
+            if not isinstance(array_type, ir.ArrayType):
+                raise ValueError(f"Variable '{var_name}' is not an array")
+
+            elem_ptr = builder.gep(array_ptr, [ir.Constant(ir.IntType(32), 0), index])
+            return builder.load(elem_ptr)
 
     def visitBooleanExpression(self, ctx, builder):
         if ctx.getChildCount() == 1:
@@ -656,6 +778,11 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             self.visitLoop_while(ctx.loop_while(), builder)
         elif ctx.return_statement():
             self.visitReturn_statement(ctx.return_statement(), builder)
+        elif ctx.table_declaration():
+            self.visitTable_declaration(ctx.table_declaration(), builder)
+        elif ctx.table_assignment():
+            print(ctx.getText())
+            self.visitTable_assignment(ctx.table_assignment(), builder)
         else:
             raise ValueError(f"Unknown statement: {ctx.getText()}")
         

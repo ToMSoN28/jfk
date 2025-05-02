@@ -44,12 +44,30 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#table_declaration.
+    def enterTable_declaration(self, ctx:SimpleLangParser.Table_declarationContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#table_declaration.
+    def exitTable_declaration(self, ctx:SimpleLangParser.Table_declarationContext):
+        pass
+
+
     # Enter a parse tree produced by SimpleLangParser#assignment.
     def enterAssignment(self, ctx:SimpleLangParser.AssignmentContext):
         pass
 
     # Exit a parse tree produced by SimpleLangParser#assignment.
     def exitAssignment(self, ctx:SimpleLangParser.AssignmentContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#table_assignment.
+    def enterTable_assignment(self, ctx:SimpleLangParser.Table_assignmentContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#table_assignment.
+    def exitTable_assignment(self, ctx:SimpleLangParser.Table_assignmentContext):
         pass
 
 
@@ -131,6 +149,15 @@ class SimpleLangListener(ParseTreeListener):
 
     # Exit a parse tree produced by SimpleLangParser#FloatNumber.
     def exitFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#TableElem.
+    def enterTableElem(self, ctx:SimpleLangParser.TableElemContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#TableElem.
+    def exitTableElem(self, ctx:SimpleLangParser.TableElemContext):
         pass
 
 
