@@ -681,6 +681,118 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         builder.position_at_end(loop_end_block)
         if end_fun:
             builder.ret_void()
+      
+    def visitLoop_for_iterator(self, ctx, builder=None):
+        end_fun = False
+        if not builder:
+            end_fun = True        
+            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_for_func_{self.function_counter}")
+            self.function_counter += 1
+            self.generated_funcs.append(func.name)
+            block = func.append_basic_block(name="entry")
+            builder = ir.IRBuilder(block)
+
+        index_name = ctx.ID(0).getText()       # ID przed przecinkiem
+        value_name = ctx.ID(1).getText()       # ID po przecinku
+        table_name = ctx.ID(2).getText()       # nazwa tablicy w iteratorze
+        
+        #sprawdzanie czy zmienne są zadeklarowane
+        if self.current_function:
+            var_ptr = self.local_symbol_table[self.current_function].get(index_name)
+            # print(f"Local variable '{table_name}' found in function '{self.current_function}'")
+        else:
+            var_ptr = self.symbol_table.get(index_name)
+        if var_ptr is not None:
+            raise ValueError(f"Variable '{table_name}' is allredy declared")
+        
+        if self.current_function:
+            var_ptr = self.local_symbol_table[self.current_function].get(value_name)
+            # print(f"Local variable '{table_name}' found in function '{self.current_function}'")
+        else:
+            var_ptr = self.symbol_table.get(value_name)
+        if var_ptr is not None:
+            raise ValueError(f"Variable '{table_name}' is allredy declared")
+        
+        if self.current_function:
+            var_ptr = self.local_symbol_table[self.current_function].get(table_name)
+            print(f"Local variable '{table_name}' found in function '{self.current_function}'")
+        else:
+            var_ptr = self.symbol_table.get(table_name)
+            print(f"Global variable '{table_name}' found")
+            print(self.symbol_table)
+            print(self.symbol_table.get(table_name))
+            print(f"[{table_name}]") 
+        if var_ptr is None:
+            raise ValueError(f"Variable '{table_name}' is not declared")
+        #sprawdzenie czy zmienna jest tablicą
+        pointee_type = var_ptr.type.pointee
+        if not isinstance(pointee_type, ir.ArrayType):
+            raise ValueError(f"Variable '{table_name}' is not an array")
+        
+        table_len = pointee_type.count
+        elem_type = pointee_type.element
+        
+        # Tworzenie indeksu pętli
+        index_ptr = builder.alloca(ir.IntType(32), name=index_name)
+        builder.store(ir.Constant(ir.IntType(32), 0), index_ptr)
+        # Wskaźnik na aktualny element
+        value_ptr = builder.alloca(elem_type, name=value_name)
+        
+        if self.current_function:
+            self.local_symbol_table[self.current_function][index_name] = index_ptr
+            self.local_symbol_table[self.current_function][value_name] = value_ptr
+        else:
+            self.symbol_table[index_name] = index_ptr
+            self.symbol_table[value_name] = value_ptr            
+        
+        loop_cond_block = builder.append_basic_block('for_cond')
+        loop_body_block = builder.append_basic_block('for_body')
+        loop_inc_block = builder.append_basic_block('for_inc')
+        loop_end_block = builder.append_basic_block('for_end')
+
+        builder.branch(loop_cond_block)
+        
+        # Warunek pętli
+        builder.position_at_end(loop_cond_block)
+        index_val = builder.load(index_ptr, name="idx_val")
+        end_val = ir.Constant(ir.IntType(32), table_len)
+        cond = builder.icmp_signed('<', index_val, end_val, name="loop_cond")
+        builder.cbranch(cond, loop_body_block, loop_end_block)
+        
+        # Ciało pętli
+        builder.position_at_end(loop_body_block)
+
+        # Załaduj element z tablicy
+        elem_ptr = builder.gep(var_ptr, [ir.Constant(ir.IntType(32), 0), index_val], name="elem_ptr")
+        elem_val = builder.load(elem_ptr, name="elem_val")
+        builder.store(elem_val, value_ptr)
+
+        # Odwiedź ciało pętli
+        self.visitCode_block(ctx.code_block(), builder)
+        
+         # Inkrementuj indeks
+        if not builder.block.is_terminated:
+            builder.branch(loop_inc_block)
+
+        builder.position_at_end(loop_inc_block)
+        current_idx = builder.load(index_ptr)
+        incremented = builder.add(current_idx, ir.Constant(ir.IntType(32), 1))
+        builder.store(incremented, index_ptr)
+        builder.branch(loop_cond_block)
+
+        # Blok końca
+        builder.position_at_end(loop_end_block)
+        
+        # Usunięcie zmiennych lokalnych
+        if self.current_function:
+            del self.local_symbol_table[self.current_function][index_name]
+            del self.local_symbol_table[self.current_function][value_name]
+        else:
+            del self.symbol_table[index_name]
+            del self.symbol_table[value_name]
+
+        if end_fun:
+            builder.ret_void()
         
     def visitFunction_definition(self, ctx):
         return_type_str = ctx.getChild(1).getText()
@@ -781,8 +893,9 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         elif ctx.table_declaration():
             self.visitTable_declaration(ctx.table_declaration(), builder)
         elif ctx.table_assignment():
-            print(ctx.getText())
             self.visitTable_assignment(ctx.table_assignment(), builder)
+        elif ctx.loop_for_iterator():
+            self.visitLoop_for_iterator(ctx.loop_for_iterator(), builder)
         else:
             raise ValueError(f"Unknown statement: {ctx.getText()}")
         

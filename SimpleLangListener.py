@@ -242,6 +242,15 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#loop_for_iterator.
+    def enterLoop_for_iterator(self, ctx:SimpleLangParser.Loop_for_iteratorContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#loop_for_iterator.
+    def exitLoop_for_iterator(self, ctx:SimpleLangParser.Loop_for_iteratorContext):
+        pass
+
+
     # Enter a parse tree produced by SimpleLangParser#function_definition.
     def enterFunction_definition(self, ctx:SimpleLangParser.Function_definitionContext):
         pass

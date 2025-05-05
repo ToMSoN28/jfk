@@ -139,6 +139,11 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#loop_for_iterator.
+    def visitLoop_for_iterator(self, ctx:SimpleLangParser.Loop_for_iteratorContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SimpleLangParser#function_definition.
     def visitFunction_definition(self, ctx:SimpleLangParser.Function_definitionContext):
         return self.visitChildren(ctx)

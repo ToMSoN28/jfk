@@ -1,0 +1,8 @@
+int [3] t;
+t=[2,5,8];
+print(t);
+for i, ele in iterator( t ) {
+    print(i);
+    print(ele);
+    print("--");
+}

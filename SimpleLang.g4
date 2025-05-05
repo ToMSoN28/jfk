@@ -8,6 +8,7 @@ statement: variable_declaration
          | input_statement
          | if_statement
          | loop_while
+         | loop_for_iterator
          | return_statement
          | table_declaration
          | table_assignment
@@ -58,6 +59,8 @@ boolean_expression: boolean_expression op=('AND' | 'OR' | 'XOR') boolean_express
 comparizon_expression: expression op=('>'|'<'|'=='|'!='|'<='|'>=') expression ;   
 
 loop_while: 'while' boolean_expression code_block ;
+
+loop_for_iterator: 'for' ID ',' ID 'in' 'iterator' '(' ID ')' code_block ;
 
 function_definition: 'func' type ID '(' parametr_list? ')' code_block ;
 
