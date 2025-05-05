@@ -16,13 +16,15 @@ Study project - own compilator
 * declaration of function that returns value (int, float, bool)
 * string: declaration, printing, assigning
 * table: declaration, assigning whole (must afret dclaration), assiging single value, accesing single value, printing whole table
-
+* loop over list (iterator)
+  
 ## TODO
 matrix,
 structures,
-loop over list (iterator) TK
 
 ## Working code
+small part for presentation in `presentation_code`
+
 ```
 string str = "Hello";
 print(str);
