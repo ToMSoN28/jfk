@@ -258,9 +258,75 @@ loop_end.1:
 @".fmt_d" = internal constant [4 x i8] c"%d\0a\00"
 @".fmt_d_" = internal constant [4 x i8] c"%d \00"
 @".fmt_" = internal constant [2 x i8] c"\0a\00"
-@".str.str.0" = internal constant [6 x i8] c"Hello\00"
-@"str" = internal global i8* bitcast ([6 x i8]* @".str.str.0" to i8*)
-define void @"dummy_print_func_0"()
+@"t" = internal global [3 x i32] zeroinitializer
+define void @"dummy_ass_func_0"()
+{
+entry:
+  %".2" = getelementptr [3 x i32], [3 x i32]* @"t", i32 0, i32 0
+  store i32 2, i32* %".2"
+  %".4" = getelementptr [3 x i32], [3 x i32]* @"t", i32 0, i32 1
+  store i32 5, i32* %".4"
+  %".6" = getelementptr [3 x i32], [3 x i32]* @"t", i32 0, i32 2
+  store i32 8, i32* %".6"
+  ret void
+}
+
+define void @"dummy_print_func_1"()
+{
+entry:
+  %".2" = bitcast [4 x i8]* @".fmt_d_" to i8*
+  %".3" = getelementptr [3 x i32], [3 x i32]* @"t", i32 0, i32 0
+  %".4" = load i32, i32* %".3"
+  %".5" = call i32 (i8*, ...) @"printf"(i8* %".2", i32 %".4")
+  %".6" = getelementptr [3 x i32], [3 x i32]* @"t", i32 0, i32 1
+  %".7" = load i32, i32* %".6"
+  %".8" = call i32 (i8*, ...) @"printf"(i8* %".2", i32 %".7")
+  %".9" = getelementptr [3 x i32], [3 x i32]* @"t", i32 0, i32 2
+  %".10" = load i32, i32* %".9"
+  %".11" = call i32 (i8*, ...) @"printf"(i8* %".2", i32 %".10")
+  %".12" = bitcast [2 x i8]* @".fmt_" to i8*
+  %".13" = call i32 (i8*, ...) @"printf"(i8* %".12")
+  ret void
+}
+
+define void @"dummy_for_func_2"()
+{
+entry:
+  %"i" = alloca i32
+  store i32 0, i32* %"i"
+  %"ele" = alloca i32
+  br label %"for_cond"
+for_cond:
+  %"idx_val" = load i32, i32* %"i"
+  %"loop_cond" = icmp slt i32 %"idx_val", 3
+  br i1 %"loop_cond", label %"for_body", label %"for_end"
+for_body:
+  %"elem_ptr" = getelementptr [3 x i32], [3 x i32]* @"t", i32 0, i32 %"idx_val"
+  %"elem_val" = load i32, i32* %"elem_ptr"
+  store i32 %"elem_val", i32* %"ele"
+  %".6" = load i32, i32* %"i"
+  %".7" = bitcast [4 x i8]* @".fmt_d" to i8*
+  %".8" = call i32 (i8*, ...) @"printf"(i8* %".7", i32 %".6")
+  %".9" = load i32, i32* %"ele"
+  %".10" = bitcast [4 x i8]* @".fmt_d" to i8*
+  %".11" = call i32 (i8*, ...) @"printf"(i8* %".10", i32 %".9")
+  %".12" = bitcast [3 x i8]* @".str.print.3" to i8*
+  %".13" = bitcast [4 x i8]* @".fmt_s" to i8*
+  %".14" = call i32 (i8*, ...) @"printf"(i8* %".13", i8* %".12")
+  br label %"for_inc"
+for_inc:
+  %".16" = load i32, i32* %"i"
+  %".17" = add i32 %".16", 1
+  store i32 %".17", i32* %"i"
+  br label %"for_cond"
+for_end:
+  ret void
+}
+
+@".str.print.3" = internal constant [3 x i8] c"--\00"
+@".str.str.3" = internal constant [6 x i8] c"Hello\00"
+@"str" = internal global i8* bitcast ([6 x i8]* @".str.str.3" to i8*)
+define void @"dummy_print_func_3"()
 {
 entry:
   %".2" = load i8*, i8** @"str"
@@ -269,16 +335,16 @@ entry:
   ret void
 }
 
-define void @"dummy_ass_func_1"()
+define void @"dummy_ass_func_4"()
 {
 entry:
-  %".2" = bitcast [5 x i8]* @".str.str.2" to i8*
+  %".2" = bitcast [5 x i8]* @".str.str.5" to i8*
   store i8* %".2", i8** @"str"
   ret void
 }
 
-@".str.str.2" = internal constant [5 x i8] c"Word\00"
-define void @"dummy_print_func_2"()
+@".str.str.5" = internal constant [5 x i8] c"Word\00"
+define void @"dummy_print_func_5"()
 {
 entry:
   %".2" = load i8*, i8** @"str"
@@ -287,20 +353,20 @@ entry:
   ret void
 }
 
-define void @"dummy_print_func_3"()
+define void @"dummy_print_func_6"()
 {
 entry:
-  %".2" = bitcast [4 x i8]* @".str.print.4" to i8*
+  %".2" = bitcast [4 x i8]* @".str.print.7" to i8*
   %".3" = bitcast [4 x i8]* @".fmt_s" to i8*
   %".4" = call i32 (i8*, ...) @"printf"(i8* %".3", i8* %".2")
   ret void
 }
 
-@".str.print.4" = internal constant [4 x i8] c"str\00"
+@".str.print.7" = internal constant [4 x i8] c"str\00"
 @"a" = internal global i32 5
 @"b" = internal global i32 7
 @"res" = internal global i32 0
-define void @"dummy_ass_func_4"()
+define void @"dummy_ass_func_7"()
 {
 entry:
   %".2" = load i32, i32* @"a"
@@ -310,7 +376,7 @@ entry:
   ret void
 }
 
-define void @"dummy_print_func_5"()
+define void @"dummy_print_func_8"()
 {
 entry:
   %".2" = load i32, i32* @"res"
@@ -319,14 +385,72 @@ entry:
   ret void
 }
 
+@"matrix" = internal global [2 x [2 x i32]] [[2 x i32] [i32 1, i32 60], [2 x i32] [i32 3, i32 4]]
+@"sum" = internal global i32 0
+@"r" = internal global i32 0
+@"max_rows" = internal global i32 2
+@"c" = internal global i32 0
+@"max_cols" = internal global i32 2
+define void @"dummy_while_func_9"()
+{
+entry:
+  br label %"loop_condition"
+loop_condition:
+  %".3" = load i32, i32* @"r"
+  %".4" = load i32, i32* @"max_rows"
+  %".5" = icmp slt i32 %".3", %".4"
+  br i1 %".5", label %"loop_body", label %"loop_end"
+loop_body:
+  store i32 0, i32* @"c"
+  br label %"loop_condition.1"
+loop_end:
+  ret void
+loop_condition.1:
+  %".9" = load i32, i32* @"c"
+  %".10" = load i32, i32* @"max_cols"
+  %".11" = icmp slt i32 %".9", %".10"
+  br i1 %".11", label %"loop_body.1", label %"loop_end.1"
+loop_body.1:
+  %".13" = load i32, i32* @"sum"
+  %".14" = load i32, i32* @"r"
+  %".15" = load i32, i32* @"c"
+  %"matrix_elem_ptr" = getelementptr [2 x [2 x i32]], [2 x [2 x i32]]* @"matrix", i32 0, i32 %".14", i32 %".15"
+  %"matrix_elem" = load i32, i32* %"matrix_elem_ptr"
+  %".16" = add i32 %".13", %"matrix_elem"
+  store i32 %".16", i32* @"sum"
+  %".18" = load i32, i32* @"c"
+  %".19" = add i32 %".18", 1
+  store i32 %".19", i32* @"c"
+  br label %"loop_condition.1"
+loop_end.1:
+  %".22" = load i32, i32* @"r"
+  %".23" = add i32 %".22", 1
+  store i32 %".23", i32* @"r"
+  br label %"loop_condition"
+}
+
+define void @"dummy_print_func_10"()
+{
+entry:
+  %".2" = load i32, i32* @"sum"
+  %".3" = bitcast [4 x i8]* @".fmt_d" to i8*
+  %".4" = call i32 (i8*, ...) @"printf"(i8* %".3", i32 %".2")
+  ret void
+}
+
 define i32 @"main"()
 {
 entry:
-  call void @"dummy_print_func_0"()
-  call void @"dummy_ass_func_1"()
-  call void @"dummy_print_func_2"()
+  call void @"dummy_ass_func_0"()
+  call void @"dummy_print_func_1"()
+  call void @"dummy_for_func_2"()
   call void @"dummy_print_func_3"()
   call void @"dummy_ass_func_4"()
   call void @"dummy_print_func_5"()
+  call void @"dummy_print_func_6"()
+  call void @"dummy_ass_func_7"()
+  call void @"dummy_print_func_8"()
+  call void @"dummy_while_func_9"()
+  call void @"dummy_print_func_10"()
   ret i32 0
 }

@@ -56,7 +56,7 @@ class SimpleLangChecker:
 
 if __name__ == "__main__":
     # Provide the path to your code file
-    file_path = "code.txt"  # Modify this to your actual file path
+    file_path = "code1.txt"  # Modify this to your actual file path
 
     # Check the code in the file
     checker = SimpleLangChecker(file_path)

@@ -200,6 +200,226 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             
         if end_fun:
             builder.ret_void()
+
+    def visitMatrix_declaration(self, ctx: SimpleLangParser.Matrix_declarationContext, builder=None):
+        matrix_name = ctx.ID().getText()
+        element_type_str = ctx.type_().getText()
+        rows = int(ctx.NUMBER(0).getText())
+        cols = int(ctx.NUMBER(1).getText())
+
+        llvm_element_type = None
+        if element_type_str == "int":
+            llvm_element_type = ir.IntType(32)
+        elif element_type_str == "float":
+            llvm_element_type = ir.DoubleType()
+        elif element_type_str == "bool":
+            llvm_element_type = ir.IntType(1)
+        elif element_type_str == "string":
+            llvm_element_type = ir.IntType(8).as_pointer()
+        else:
+            raise ValueError(f"Unsupported type: {element_type_str}")
+
+        if rows <= 0 or cols <= 0:
+            raise ValueError(f"Matrix dimensions must be positive for '{matrix_name}'")
+
+        #llvm_element_type = self._get_llvm_type(element_type_str)
+        matrix_type = ir.ArrayType(ir.ArrayType(llvm_element_type, cols), rows)
+
+        is_local = builder is not None and self.current_function is not None
+        target_table = self.local_symbol_table.setdefault(self.current_function, {}) if is_local else self.symbol_table
+
+        if matrix_name in target_table:
+             raise ValueError(f"Variable '{matrix_name}' already declared in this scope")
+
+        initializer_value = None
+        local_init_values = []
+        if ctx.matrix_initializer():
+            init_ctx = ctx.matrix_initializer()
+            row_inits = init_ctx.row_initializer()
+            if len(row_inits) != rows:
+                raise ValueError(f"Initializer for matrix '{matrix_name}' has {len(row_inits)} rows, expected {rows}")
+
+            matrix_rows_constants = []
+            for r, row_init_ctx in enumerate(row_inits):
+                col_exprs = row_init_ctx.expression()
+                if len(col_exprs) != cols:
+                    raise ValueError(f"Initializer for matrix '{matrix_name}' row {r} has {len(col_exprs)} columns, expected {cols}")
+
+                matrix_cols_constants = []
+                current_local_row_values = []
+                for c, expr_ctx in enumerate(col_exprs):
+                    val = self.visitExpression(expr_ctx, builder)
+                    if not is_local and not isinstance(val, ir.Constant):
+                         raise ValueError(f"Global matrix initializer element [{r}][{c}] for '{matrix_name}' must be constant.")
+                    if val.type != llvm_element_type:
+                         if isinstance(llvm_element_type, ir.DoubleType) and isinstance(val.type, ir.IntType):
+                              if isinstance(val, ir.Constant):
+                                   val = ir.Constant(ir.DoubleType(), float(val.constant))
+                              elif is_local:
+                                   val = builder.sitofp(val, ir.DoubleType())
+                         else:
+                              raise TypeError(f"Type mismatch in initializer for '{matrix_name}' at [{r}][{c}]. Expected {llvm_element_type}, got {val.type}")
+
+                    if is_local:
+                         current_local_row_values.append(val)
+                    else:
+                         matrix_cols_constants.append(val)
+
+                if is_local:
+                     local_init_values.append(current_local_row_values)
+                else:
+                     row_const = ir.Constant(ir.ArrayType(llvm_element_type, cols), matrix_cols_constants)
+                     matrix_rows_constants.append(row_const)
+
+            if not is_local:
+                 initializer_value = ir.Constant(matrix_type, matrix_rows_constants)
+
+        if is_local:
+            ptr = builder.alloca(matrix_type, name=matrix_name)
+            target_table[matrix_name] = ptr
+            if ctx.matrix_initializer():
+                 zero = ir.Constant(ir.IntType(32), 0)
+                 for r in range(rows):
+                      for c in range(cols):
+                           row_idx = ir.Constant(ir.IntType(32), r)
+                           col_idx = ir.Constant(ir.IntType(32), c)
+                           elem_ptr = builder.gep(ptr, [zero, row_idx, col_idx], name=f"{matrix_name}_{r}_{c}_ptr")
+                           value_to_store = local_init_values[r][c]
+                           builder.store(value_to_store, elem_ptr)
+        else:
+            global_matrix = ir.GlobalVariable(self.module, matrix_type, name=matrix_name)
+            global_matrix.linkage = 'internal'
+            global_matrix.initializer = initializer_value
+            target_table[matrix_name] = global_matrix
+
+
+    def visitMatrix_assignment(self, ctx:SimpleLangParser.Matrix_assignmentContext, builder=None):
+        matrix_name = ctx.ID().getText()
+
+        var_ptr = None
+        is_local = False
+        if self.current_function and matrix_name in self.local_symbol_table.get(self.current_function, {}):
+            var_ptr = self.local_symbol_table[self.current_function][matrix_name]
+            is_local = True
+        elif matrix_name in self.symbol_table:
+            var_ptr = self.symbol_table[matrix_name]
+            is_local = False
+        else:
+            raise ValueError(f"Matrix '{matrix_name}' is not declared")
+
+        if not isinstance(var_ptr.type.pointee, ir.ArrayType) or \
+           not isinstance(var_ptr.type.pointee.element, ir.ArrayType):
+            raise TypeError(f"Variable '{matrix_name}' is not a matrix.")
+
+        matrix_type = var_ptr.type.pointee
+        row_type = matrix_type.element
+        llvm_element_type = row_type.element
+        rows = matrix_type.count
+        cols = row_type.count
+
+        target_builder = builder
+        end_fun = False
+        if not is_local and not target_builder:
+            end_fun = True
+            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_massign_func_{self.function_counter}")
+            self.function_counter += 1
+            self.generated_funcs.append(func.name)
+            block = func.append_basic_block(name="entry")
+            target_builder = ir.IRBuilder(block)
+            print(f'New dummy function for global matrix assignment: {func.name}')
+
+        init_ctx = ctx.matrix_initializer()
+        row_inits = init_ctx.row_initializer()
+        if len(row_inits) != rows:
+            raise ValueError(f"Initializer for matrix assignment '{matrix_name}' has {len(row_inits)} rows, expected {rows}")
+
+        zero = ir.Constant(ir.IntType(32), 0)
+        for r, row_init_ctx in enumerate(row_inits):
+            col_exprs = row_init_ctx.expression()
+            if len(col_exprs) != cols:
+                raise ValueError(f"Initializer for matrix assignment '{matrix_name}' row {r} has {len(col_exprs)} columns, expected {cols}")
+
+            row_idx = ir.Constant(ir.IntType(32), r)
+            for c, expr_ctx in enumerate(col_exprs):
+                value = self.visitExpression(expr_ctx, target_builder)
+                if value.type != llvm_element_type:
+                     if isinstance(llvm_element_type, ir.DoubleType) and isinstance(value.type, ir.IntType) and value.type.width == 32:
+                          value = target_builder.sitofp(value, ir.DoubleType())
+                     elif isinstance(llvm_element_type, ir.IntType) and llvm_element_type.width == 32 and isinstance(value.type, ir.DoubleType):
+                          value = target_builder.fptosi(value, ir.IntType(32))
+                     else:
+                         raise TypeError(f"Type mismatch in matrix assignment initializer for '{matrix_name}' at [{r}][{c}]. Expected {llvm_element_type}, got {value.type}")
+
+                col_idx = ir.Constant(ir.IntType(32), c)
+                elem_ptr = target_builder.gep(var_ptr, [zero, row_idx, col_idx], name=f"{matrix_name}_{r}_{c}_ptr")
+                target_builder.store(value, elem_ptr)
+
+        if end_fun:
+            target_builder.ret_void()
+
+
+    def visitMatrix_element_assignment(self, ctx:SimpleLangParser.Matrix_element_assignmentContext, builder=None):
+        matrix_name = ctx.ID().getText()
+
+        var_ptr = None
+        is_local = False
+        if self.current_function and matrix_name in self.local_symbol_table.get(self.current_function, {}):
+            var_ptr = self.local_symbol_table[self.current_function][matrix_name]
+            is_local = True
+        elif matrix_name in self.symbol_table:
+            var_ptr = self.symbol_table[matrix_name]
+            is_local = False
+        else:
+            raise ValueError(f"Matrix '{matrix_name}' is not declared")
+
+        # Check type - must be pointer to array of array
+        if not isinstance(var_ptr.type.pointee, ir.ArrayType) or \
+           not isinstance(var_ptr.type.pointee.element, ir.ArrayType):
+            raise TypeError(f"Variable '{matrix_name}' is not a matrix.")
+
+        llvm_element_type = var_ptr.type.pointee.element.element
+
+        target_builder = builder
+        end_fun = False
+        if not is_local and not target_builder:
+            end_fun = True
+            func = ir.Function(self.module, ir.FunctionType(ir.VoidType(), []), name=f"dummy_melem_assign_func_{self.function_counter}")
+            self.function_counter += 1
+            self.generated_funcs.append(func.name)
+            block = func.append_basic_block(name="entry")
+            target_builder = ir.IRBuilder(block)
+            print(f'New dummy function for global matrix element assignment: {func.name}')
+
+
+        row_index_val = self.visitExpression(ctx.expression(0), target_builder)
+        col_index_val = self.visitExpression(ctx.expression(1), target_builder)
+        value_val = self.visitExpression(ctx.expression(2), target_builder)
+
+        if not isinstance(row_index_val.type, ir.IntType):
+             raise TypeError(f"Matrix row index for '{matrix_name}' must be an integer, got {row_index_val.type}")
+        if row_index_val.type.width != 32:
+             row_index_val = target_builder.sext(row_index_val, ir.IntType(32)) # Or zext
+
+        if not isinstance(col_index_val.type, ir.IntType):
+             raise TypeError(f"Matrix column index for '{matrix_name}' must be an integer, got {col_index_val.type}")
+        if col_index_val.type.width != 32:
+             col_index_val = target_builder.sext(col_index_val, ir.IntType(32)) # Or zext
+
+        if value_val.type != llvm_element_type:
+             if isinstance(llvm_element_type, ir.DoubleType) and isinstance(value_val.type, ir.IntType) and value_val.type.width == 32:
+                  value_val = target_builder.sitofp(value_val, ir.DoubleType())
+             elif isinstance(llvm_element_type, ir.IntType) and llvm_element_type.width == 32 and isinstance(value_val.type, ir.DoubleType):
+                  value_val = target_builder.fptosi(value_val, ir.IntType(32))
+             else:
+                  raise TypeError(f"Type mismatch in matrix element assignment to '{matrix_name}'. Expected {llvm_element_type}, got {value_val.type}")
+
+        zero = ir.Constant(ir.IntType(32), 0)
+        elem_ptr = target_builder.gep(var_ptr, [zero, row_index_val, col_index_val], name=f"{matrix_name}_elem_ptr")
+
+        target_builder.store(value_val, elem_ptr)
+
+        if end_fun:
+            target_builder.ret_void()
  
 
     def visitAssignment(self, ctx, builder=None):
@@ -399,27 +619,85 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 return builder.sdiv(left, right) if is_int else builder.fdiv(left, right)
             else:
                 raise ValueError(f"Unsupported binary operator: {op}")
-        
-        elif len(ctx.children) >= 4 and ctx.getChild(0).getText().isidentifier() and ctx.getChild(1).getText() == "[":
-            # Wypisywanie elementu tablicy: print(arr[1])
+
+        elif ctx.getChildCount() == 4 and \
+                isinstance(ctx.getChild(0), TerminalNode) and ctx.getChild(0).symbol.type == SimpleLangLexer.ID and \
+                ctx.getChild(1).getText() == '[' and \
+                isinstance(ctx.getChild(2), SimpleLangParser.ExpressionContext) and \
+                ctx.getChild(3).getText() == ']':
+
+            print("Handling Table Element Access")  # Debug
             var_name = ctx.getChild(0).getText()
             index_expr = ctx.getChild(2)
-            index = self.visitExpression(index_expr, builder)
+            index_val = self.visitExpression(index_expr, builder)
 
-            if self.current_function:
+            if not isinstance(index_val.type, ir.IntType):
+                raise TypeError(f"Table index for '{var_name}' must be integer, got {index_val.type}")
+            if index_val.type.width != 32:
+                index_val = builder.sext(index_val, ir.IntType(32))
+
+            array_ptr = None
+            if self.current_function and var_name in self.local_symbol_table.get(self.current_function, {}):
                 array_ptr = self.local_symbol_table[self.current_function].get(var_name)
-            else:
+            elif var_name in self.symbol_table:
                 array_ptr = self.symbol_table.get(var_name)
 
             if array_ptr is None:
-                raise ValueError(f"Array '{var_name}' is not declared")
+                raise ValueError(f"Array/Table '{var_name}' is not declared")
 
-            array_type = array_ptr.type.pointee
-            if not isinstance(array_type, ir.ArrayType):
-                raise ValueError(f"Variable '{var_name}' is not an array")
+            if not isinstance(array_ptr.type.pointee, ir.ArrayType):
+                raise TypeError(f"Variable '{var_name}' is not an array/table")
 
-            elem_ptr = builder.gep(array_ptr, [ir.Constant(ir.IntType(32), 0), index])
-            return builder.load(elem_ptr)
+            zero = ir.Constant(ir.IntType(32), 0)
+            elem_ptr = builder.gep(array_ptr, [zero, index_val], name=f"{var_name}_elem_ptr")
+
+            return builder.load(elem_ptr, name=f"{var_name}_elem")
+
+        elif ctx.getChildCount() == 7 and \
+                isinstance(ctx.getChild(0), TerminalNode) and ctx.getChild(0).symbol.type == SimpleLangLexer.ID and \
+                ctx.getChild(1).getText() == '[' and \
+                isinstance(ctx.getChild(2), SimpleLangParser.ExpressionContext) and \
+                ctx.getChild(3).getText() == ']' and \
+                ctx.getChild(4).getText() == '[' and \
+                isinstance(ctx.getChild(5), SimpleLangParser.ExpressionContext) and \
+                ctx.getChild(6).getText() == ']':
+
+            print("Handling Matrix Element Access")  # Debug
+            matrix_name = ctx.getChild(0).getText()
+            row_expr = ctx.getChild(2)
+            col_expr = ctx.getChild(5)
+
+            row_val = self.visitExpression(row_expr, builder)
+            col_val = self.visitExpression(col_expr, builder)
+
+            if not isinstance(row_val.type, ir.IntType):
+                raise TypeError(f"Matrix row index for '{matrix_name}' must be integer, got {row_val.type}")
+            if row_val.type.width != 32:
+                row_val = builder.sext(row_val, ir.IntType(32))
+
+            if not isinstance(col_val.type, ir.IntType):
+                raise TypeError(f"Matrix column index for '{matrix_name}' must be integer, got {col_val.type}")
+            if col_val.type.width != 32:
+                col_val = builder.sext(col_val, ir.IntType(32))
+
+            matrix_ptr = None
+            if self.current_function and matrix_name in self.local_symbol_table.get(self.current_function, {}):
+                matrix_ptr = self.local_symbol_table[self.current_function].get(matrix_name)
+            elif matrix_name in self.symbol_table:
+                matrix_ptr = self.symbol_table.get(matrix_name)
+
+            if matrix_ptr is None:
+                raise ValueError(f"Matrix '{matrix_name}' is not declared")
+
+            if not isinstance(matrix_ptr.type.pointee, ir.ArrayType) or \
+                    not isinstance(matrix_ptr.type.pointee.element, ir.ArrayType):
+                raise TypeError(f"Identifier '{matrix_name}' is not a matrix.")
+
+            zero = ir.Constant(ir.IntType(32), 0)
+            elem_ptr = builder.gep(matrix_ptr, [zero, row_val, col_val], name=f"{matrix_name}_elem_ptr")
+
+            return builder.load(elem_ptr, name=f"{matrix_name}_elem")
+
 
     def visitBooleanExpression(self, ctx, builder):
         if ctx.getChildCount() == 1:
@@ -896,6 +1174,12 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             self.visitTable_assignment(ctx.table_assignment(), builder)
         elif ctx.loop_for_iterator():
             self.visitLoop_for_iterator(ctx.loop_for_iterator(), builder)
+        elif ctx.matrix_declaration():
+            self.visitMatrix_declaration(ctx.matrix_declaration(), builder)
+        elif ctx.matrix_assignment():
+            self.visitMatrix_assignment(ctx.matrix_assignment(), builder)
+        elif ctx.matrix_element_assignment():
+            self.visitMatrix_element_assignment(ctx.matrix_element_assignment(), builder)
         else:
             raise ValueError(f"Unknown statement: {ctx.getText()}")
         
@@ -966,9 +1250,9 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         filepath = sys.argv[1]
     else:
-        filepath = 'code.txt'
+        filepath = 'code1.txt'
     if os.path.exists(filepath):
-        with open("code.txt", "r") as f:
+        with open("code1.txt", "r") as f:
             input_text = f.read()
     else:
         print(f'[INFO] Plik {filepath} nie znaleziony — używam domyślnego kodu.')

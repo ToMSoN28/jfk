@@ -12,6 +12,9 @@ statement: variable_declaration
          | return_statement
          | table_declaration
          | table_assignment
+         | matrix_declaration
+         | matrix_assignment
+         | matrix_element_assignment
          ;
 
 if_statement: 'if' boolean_expression code_block ('else' code_block)? ;
@@ -33,6 +36,14 @@ table_assignment: ID '=' '[' expression (',' expression)* ']' ';'
                 | ID '[' expression ']' '=' expression ';'                         
                 ;
 
+matrix_declaration: type ID '[' NUMBER ']' '[' NUMBER ']' ('=' matrix_initializer)? ';' ;
+matrix_initializer: '[' row_initializer (',' row_initializer)* ']' ;
+row_initializer: '[' expression (',' expression)* ']' ;
+
+matrix_assignment: ID '=' matrix_initializer ';' ;
+matrix_element_assignment: ID '[' expression ']' '[' expression ']' '=' expression ';' ;
+
+
 print_statement: 'print' '(' (ID | expression | boolean_expression | STRING ) ')' ';' ;
 
 input_statement: ID '=' 'input' '(' ')' ';' ;
@@ -45,6 +56,7 @@ expression: expression op=('*'|'/') expression # MulDiv
           | ID                                   # Variable
           | func_call                            # FuncCallNum
           | ID '[' expression ']'                # TableElem
+          | ID '[' expression ']' '[' expression ']' # MatrixElem
           ;
 
 boolean_expression: boolean_expression op=('AND' | 'OR' | 'XOR') boolean_expression # BoolBinaryOp

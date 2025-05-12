@@ -1,0 +1,64 @@
+int [3] t;
+t=[2,5,8];
+print(t);
+for i, ele in iterator( t ) {
+    print(i);
+    print(ele);
+    print("--");
+}
+
+
+string str = "Hello";
+print(str);
+str = "Word";
+print(str);
+print("str");
+
+func int max (int a, int b) {
+    int [20] table;
+    table = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+    int i = 0;
+    string t = "A jest wiksze od B";
+    string n = "B jest wiksze od A";
+    if a > b {
+        print(t);
+        while i < a {
+            print(i*a);
+            table[i] = i*a;
+            i = i+1;
+        }
+        print(table);
+        return a;
+    } else {
+        print(n);
+        while i < b {
+            print(i*b);
+            table[i] = i*b;
+            i = i+1;
+        }
+        print(table);
+        return b;
+    }
+}
+int a = 5;
+int b = 7;
+int res = 0;
+res = max(a, b);
+print(res);
+
+int matrix[2][2] = [[1, 60], [3, 4]];
+int sum = 0;
+int r = 0;
+int max_rows = 2;
+int c = 0;
+int max_cols = 2;
+
+while r < max_rows {
+    c = 0;
+    while c < max_cols {
+        sum = sum + matrix[r][c];
+        c = c + 1;
+    }
+    r = r + 1;
+}
+print(sum);
