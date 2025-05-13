@@ -17,9 +17,9 @@ Study project - own compilator
 * string: declaration, printing, assigning
 * table: declaration, assigning whole (must afret dclaration), assiging single value, accesing single value, printing whole table
 * loop over list (iterator)
+* matrix
   
 ## TODO
-matrix,
 structures,
 
 ## Working code
