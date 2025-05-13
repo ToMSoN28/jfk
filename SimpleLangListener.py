@@ -1,4 +1,4 @@
-# Generated from ./SimpleLang.g4 by ANTLR 4.13.2
+# Generated from SimpleLang.g4 by ANTLR 4.13.2
 from antlr4 import *
 if "." in __name__:
     from .SimpleLangParser import SimpleLangParser
@@ -68,6 +68,51 @@ class SimpleLangListener(ParseTreeListener):
 
     # Exit a parse tree produced by SimpleLangParser#table_assignment.
     def exitTable_assignment(self, ctx:SimpleLangParser.Table_assignmentContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#matrix_declaration.
+    def enterMatrix_declaration(self, ctx:SimpleLangParser.Matrix_declarationContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#matrix_declaration.
+    def exitMatrix_declaration(self, ctx:SimpleLangParser.Matrix_declarationContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#matrix_initializer.
+    def enterMatrix_initializer(self, ctx:SimpleLangParser.Matrix_initializerContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#matrix_initializer.
+    def exitMatrix_initializer(self, ctx:SimpleLangParser.Matrix_initializerContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#row_initializer.
+    def enterRow_initializer(self, ctx:SimpleLangParser.Row_initializerContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#row_initializer.
+    def exitRow_initializer(self, ctx:SimpleLangParser.Row_initializerContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#matrix_assignment.
+    def enterMatrix_assignment(self, ctx:SimpleLangParser.Matrix_assignmentContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#matrix_assignment.
+    def exitMatrix_assignment(self, ctx:SimpleLangParser.Matrix_assignmentContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#matrix_element_assignment.
+    def enterMatrix_element_assignment(self, ctx:SimpleLangParser.Matrix_element_assignmentContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#matrix_element_assignment.
+    def exitMatrix_element_assignment(self, ctx:SimpleLangParser.Matrix_element_assignmentContext):
         pass
 
 
@@ -158,6 +203,15 @@ class SimpleLangListener(ParseTreeListener):
 
     # Exit a parse tree produced by SimpleLangParser#TableElem.
     def exitTableElem(self, ctx:SimpleLangParser.TableElemContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#MatrixElem.
+    def enterMatrixElem(self, ctx:SimpleLangParser.MatrixElemContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#MatrixElem.
+    def exitMatrixElem(self, ctx:SimpleLangParser.MatrixElemContext):
         pass
 
 

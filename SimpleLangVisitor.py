@@ -1,4 +1,4 @@
-# Generated from ./SimpleLang.g4 by ANTLR 4.13.2
+# Generated from SimpleLang.g4 by ANTLR 4.13.2
 from antlr4 import *
 if "." in __name__:
     from .SimpleLangParser import SimpleLangParser
@@ -41,6 +41,31 @@ class SimpleLangVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SimpleLangParser#table_assignment.
     def visitTable_assignment(self, ctx:SimpleLangParser.Table_assignmentContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#matrix_declaration.
+    def visitMatrix_declaration(self, ctx:SimpleLangParser.Matrix_declarationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#matrix_initializer.
+    def visitMatrix_initializer(self, ctx:SimpleLangParser.Matrix_initializerContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#row_initializer.
+    def visitRow_initializer(self, ctx:SimpleLangParser.Row_initializerContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#matrix_assignment.
+    def visitMatrix_assignment(self, ctx:SimpleLangParser.Matrix_assignmentContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#matrix_element_assignment.
+    def visitMatrix_element_assignment(self, ctx:SimpleLangParser.Matrix_element_assignmentContext):
         return self.visitChildren(ctx)
 
 
@@ -91,6 +116,11 @@ class SimpleLangVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SimpleLangParser#TableElem.
     def visitTableElem(self, ctx:SimpleLangParser.TableElemContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#MatrixElem.
+    def visitMatrixElem(self, ctx:SimpleLangParser.MatrixElemContext):
         return self.visitChildren(ctx)
 
 

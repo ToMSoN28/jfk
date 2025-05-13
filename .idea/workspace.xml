@@ -5,10 +5,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="73dc83ed-f0a2-4db3-8d39-ad71afbac0cf" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/code1.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SimpleLang.g4" beforeDir="false" afterPath="$PROJECT_DIR$/SimpleLang.g4" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SimpleLang.interp" beforeDir="false" afterPath="$PROJECT_DIR$/SimpleLang.interp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SimpleLangLexer.py" beforeDir="false" afterPath="$PROJECT_DIR$/SimpleLangLexer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SimpleLangListener.py" beforeDir="false" afterPath="$PROJECT_DIR$/SimpleLangListener.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SimpleLangParser.py" beforeDir="false" afterPath="$PROJECT_DIR$/SimpleLangParser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SimpleLangVisitor.py" beforeDir="false" afterPath="$PROJECT_DIR$/SimpleLangVisitor.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmp1.py" beforeDir="false" afterPath="$PROJECT_DIR$/cmp1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/code.txt" beforeDir="false" afterPath="$PROJECT_DIR$/code.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out" beforeDir="false" afterPath="$PROJECT_DIR$/out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out.o" beforeDir="false" afterPath="$PROJECT_DIR$/out.o" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output.ll" beforeDir="false" afterPath="$PROJECT_DIR$/output.ll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,6 +60,7 @@
     "Python.test.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "matrix",
     "last_opened_file_path": "/Users/x/Desktop/jfk",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -144,17 +155,17 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>336</line>
+          <line>558</line>
           <option name="timeStamp" value="34" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>337</line>
+          <line>559</line>
           <option name="timeStamp" value="35" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>341</line>
+          <line>563</line>
           <option name="timeStamp" value="38" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -199,62 +210,62 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>343</line>
+          <line>565</line>
           <option name="timeStamp" value="72" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>344</line>
+          <line>566</line>
           <option name="timeStamp" value="73" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>376</line>
+          <line>598</line>
           <option name="timeStamp" value="77" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>377</line>
+          <line>599</line>
           <option name="timeStamp" value="78" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>378</line>
+          <line>600</line>
           <option name="timeStamp" value="79" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>379</line>
+          <line>601</line>
           <option name="timeStamp" value="80" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>381</line>
+          <line>603</line>
           <option name="timeStamp" value="82" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>385</line>
+          <line>607</line>
           <option name="timeStamp" value="83" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>380</line>
+          <line>602</line>
           <option name="timeStamp" value="84" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>388</line>
+          <line>610</line>
           <option name="timeStamp" value="85" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>387</line>
+          <line>609</line>
           <option name="timeStamp" value="86" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/cmp1.py</url>
-          <line>389</line>
+          <line>611</line>
           <option name="timeStamp" value="87" />
         </line-breakpoint>
       </breakpoints>
