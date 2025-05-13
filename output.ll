@@ -6,13 +6,13 @@ declare i32 @"printf"(i8* %".1", ...)
 
 declare i32 @"scanf"(i8* %".1", ...)
 
-define i32 @"max"(i32 %".1", i32 %".2")
+define i32 @"max"(i32 %"a", i32 %"b")
 {
 entry:
-  %"a" = alloca i32
-  store i32 %".1", i32* %"a"
-  %"b" = alloca i32
-  store i32 %".2", i32* %"b"
+  %"a.addr" = alloca i32
+  store i32 %"a", i32* %"a.addr"
+  %"b.addr" = alloca i32
+  store i32 %"b", i32* %"b.addr"
   %"table" = alloca [20 x i32]
   %".6" = getelementptr [20 x i32], [20 x i32]* %"table", i32 0, i32 0
   store i32 0, i32* %".6"
@@ -57,11 +57,11 @@ entry:
   %"i" = alloca i32
   store i32 0, i32* %"i"
   %"t" = alloca i8*
-  store i8* bitcast ([19 x i8]* @".str.t.0" to i8*), i8** %"t"
+  store i8* bitcast ([19 x i8]* @".str.decl.t.0" to i8*), i8** %"t"
   %"n" = alloca i8*
-  store i8* bitcast ([19 x i8]* @".str.n.0" to i8*), i8** %"n"
-  %".49" = load i32, i32* %"a"
-  %".50" = load i32, i32* %"b"
+  store i8* bitcast ([19 x i8]* @".str.decl.n.0" to i8*), i8** %"n"
+  %".49" = load i32, i32* %"a.addr"
+  %".50" = load i32, i32* %"b.addr"
   %".51" = icmp sgt i32 %".49", %".50"
   br i1 %".51", label %"if", label %"else"
 if:
@@ -78,18 +78,18 @@ merge:
   ret i32 0
 loop_condition:
   %".57" = load i32, i32* %"i"
-  %".58" = load i32, i32* %"a"
+  %".58" = load i32, i32* %"a.addr"
   %".59" = icmp slt i32 %".57", %".58"
   br i1 %".59", label %"loop_body", label %"loop_end"
 loop_body:
   %".61" = load i32, i32* %"i"
-  %".62" = load i32, i32* %"a"
+  %".62" = load i32, i32* %"a.addr"
   %".63" = mul i32 %".61", %".62"
   %".64" = bitcast [4 x i8]* @".fmt_d" to i8*
   %".65" = call i32 (i8*, ...) @"printf"(i8* %".64", i32 %".63")
   %".66" = load i32, i32* %"i"
   %".67" = load i32, i32* %"i"
-  %".68" = load i32, i32* %"a"
+  %".68" = load i32, i32* %"a.addr"
   %".69" = mul i32 %".67", %".68"
   %".70" = getelementptr [20 x i32], [20 x i32]* %"table", i32 0, i32 %".66"
   store i32 %".69", i32* %".70"
@@ -161,22 +161,22 @@ loop_end:
   %".136" = call i32 (i8*, ...) @"printf"(i8* %".76", i32 %".135")
   %".137" = bitcast [2 x i8]* @".fmt_" to i8*
   %".138" = call i32 (i8*, ...) @"printf"(i8* %".137")
-  %".139" = load i32, i32* %"a"
+  %".139" = load i32, i32* %"a.addr"
   ret i32 %".139"
 loop_condition.1:
   %".145" = load i32, i32* %"i"
-  %".146" = load i32, i32* %"b"
+  %".146" = load i32, i32* %"b.addr"
   %".147" = icmp slt i32 %".145", %".146"
   br i1 %".147", label %"loop_body.1", label %"loop_end.1"
 loop_body.1:
   %".149" = load i32, i32* %"i"
-  %".150" = load i32, i32* %"b"
+  %".150" = load i32, i32* %"b.addr"
   %".151" = mul i32 %".149", %".150"
   %".152" = bitcast [4 x i8]* @".fmt_d" to i8*
   %".153" = call i32 (i8*, ...) @"printf"(i8* %".152", i32 %".151")
   %".154" = load i32, i32* %"i"
   %".155" = load i32, i32* %"i"
-  %".156" = load i32, i32* %"b"
+  %".156" = load i32, i32* %"b.addr"
   %".157" = mul i32 %".155", %".156"
   %".158" = getelementptr [20 x i32], [20 x i32]* %"table", i32 0, i32 %".154"
   store i32 %".157", i32* %".158"
@@ -248,12 +248,12 @@ loop_end.1:
   %".224" = call i32 (i8*, ...) @"printf"(i8* %".164", i32 %".223")
   %".225" = bitcast [2 x i8]* @".fmt_" to i8*
   %".226" = call i32 (i8*, ...) @"printf"(i8* %".225")
-  %".227" = load i32, i32* %"b"
+  %".227" = load i32, i32* %"b.addr"
   ret i32 %".227"
 }
 
-@".str.t.0" = internal constant [19 x i8] c"A jest wiksze od B\00"
-@".str.n.0" = internal constant [19 x i8] c"B jest wiksze od A\00"
+@".str.decl.t.0" = internal constant [19 x i8] c"A jest wiksze od B\00"
+@".str.decl.n.0" = internal constant [19 x i8] c"B jest wiksze od A\00"
 @".fmt_s" = internal constant [4 x i8] c"%s\0a\00"
 @".fmt_d" = internal constant [4 x i8] c"%d\0a\00"
 @".fmt_d_" = internal constant [4 x i8] c"%d \00"
@@ -324,8 +324,8 @@ for_end:
 }
 
 @".str.print.3" = internal constant [3 x i8] c"--\00"
-@".str.str.3" = internal constant [6 x i8] c"Hello\00"
-@"str" = internal global i8* bitcast ([6 x i8]* @".str.str.3" to i8*)
+@".str.decl.str.3" = internal constant [6 x i8] c"Hello\00"
+@"str" = internal global i8* bitcast ([6 x i8]* @".str.decl.str.3" to i8*)
 define void @"dummy_print_func_3"()
 {
 entry:
@@ -438,6 +438,51 @@ entry:
   ret void
 }
 
+@"def" = internal global i32 0
+define void @"dummy_ass_func_11"()
+{
+entry:
+  store i32 69, i32* @"def"
+  ret void
+}
+
+define void @"dummy_print_func_12"()
+{
+entry:
+  %".2" = load i32, i32* @"def"
+  %".3" = bitcast [4 x i8]* @".fmt_d" to i8*
+  %".4" = call i32 (i8*, ...) @"printf"(i8* %".3", i32 %".2")
+  ret void
+}
+
+@"fed" = internal global i1 0
+define void @"dummy_print_func_13"()
+{
+entry:
+  %".2" = load i1, i1* @"fed"
+  %".3" = zext i1 %".2" to i32
+  %".4" = bitcast [4 x i8]* @".fmt_d" to i8*
+  %".5" = call i32 (i8*, ...) @"printf"(i8* %".4", i32 %".3")
+  ret void
+}
+
+define void @"dummy_ass_func_14"()
+{
+entry:
+  store i1 1, i1* @"fed"
+  ret void
+}
+
+define void @"dummy_print_func_15"()
+{
+entry:
+  %".2" = load i1, i1* @"fed"
+  %".3" = zext i1 %".2" to i32
+  %".4" = bitcast [4 x i8]* @".fmt_d" to i8*
+  %".5" = call i32 (i8*, ...) @"printf"(i8* %".4", i32 %".3")
+  ret void
+}
+
 define i32 @"main"()
 {
 entry:
@@ -452,5 +497,10 @@ entry:
   call void @"dummy_print_func_8"()
   call void @"dummy_while_func_9"()
   call void @"dummy_print_func_10"()
+  call void @"dummy_ass_func_11"()
+  call void @"dummy_print_func_12"()
+  call void @"dummy_print_func_13"()
+  call void @"dummy_ass_func_14"()
+  call void @"dummy_print_func_15"()
   ret i32 0
 }
