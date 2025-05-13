@@ -63,11 +63,25 @@ while r < max_rows {
 }
 print(sum);
 
-int def;
-def = 69;
-print(def);
+struct Student{
+    int nr_indeksu;
+    string imie;
+    string nazwisko;
+};
 
-bool fed;
-print(fed);
-fed = true;
-print(fed);
+Student Adam;
+Adam.nr_indeksu = 123;
+Adam.imie = "Adam";
+Adam.nazwisko = "Chilinski";
+
+Student Tomasz;
+Tomasz.nr_indeksu = 456;
+Tomasz.imie = "Tomasz";
+Tomasz.nazwisko = "Kowalski";
+
+print(Adam.nr_indeksu);
+print(Tomasz.nr_indeksu);
+
+int [2] tablica_int = [1, 2];
+
+

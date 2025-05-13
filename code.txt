@@ -1,20 +1,9 @@
-int matrix[2][2] = [[1, 60], [3, 4]];
-int sum = 0;
-int r = 0;
-int max_rows = 2;
-int c = 0;
-int max_cols = 2;
+struct P {
+    int a;
+    string b;
+};
 
-while r < max_rows {
-    c = 0;
-    while c < max_cols {
-        sum = sum + matrix[r][c];
-        c = c + 1;
-    }
-    r = r + 1;
-}
-print(sum);
+P pool;
+pool.a = 10;
+pool.b = "dupa";
 
-int abc;
-abc = 10;
-print(abc);
