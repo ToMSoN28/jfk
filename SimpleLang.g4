@@ -19,10 +19,10 @@ statement: variable_declaration
 
 if_statement: 'if' boolean_expression code_block ('else' code_block)? ;
 
-variable_declaration: 'int' ID '=' NUMBER ';' 
-                    | 'float' ID '=' FLOAT ';' 
-                    | 'bool' ID '=' boolean_expression ';' 
-                    | 'string' ID '=' STRING ';'
+variable_declaration: 'int' ID ('=' NUMBER)? ';'
+                    | 'float' ID ('=' FLOAT)? ';'
+                    | 'bool' ID ('=' boolean_expression)? ';'
+                    | 'string' ID ('=' STRING)? ';'
                     ;
 
 table_declaration: type '[' NUMBER ']' ID ';' ;

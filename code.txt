@@ -14,3 +14,7 @@ while r < max_rows {
     r = r + 1;
 }
 print(sum);
+
+int abc;
+abc = 10;
+print(abc);

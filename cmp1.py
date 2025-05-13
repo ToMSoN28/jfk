@@ -95,39 +95,67 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         var_name = ctx.ID().getText()
         if var_name == "<missing ID>":
             raise AttributeError("No variable name")
+        type_keyword_node = ctx.getChild(0)
+        type_str = type_keyword_node.getText()
+        llvm_typr = None
+        initializer = None
 
-        if ctx.NUMBER():
+        if type_str == 'int':
             llvm_type = ir.IntType(32)
-            initializer = ir.Constant(llvm_type, int(ctx.NUMBER().getText()))
-        elif ctx.FLOAT():
-            llvm_type = ir.DoubleType()
-            initializer = ir.Constant(llvm_type, float(ctx.FLOAT().getText()))
-        elif ctx.boolean_expression():
-            llvm_type = ir.IntType(1)
-            initializer = self.visitBooleanExpression(ctx.boolean_expression(), None)
-            if not isinstance(initializer, ir.Constant):
+            if ctx.NUMBER():
+                initializer = ir.Constant(llvm_type, int(ctx.NUMBER().getText()))
+            else:
                 initializer = ir.Constant(llvm_type, 0)
-        elif ctx.STRING():  # 🔧 ZMIANA
-            text = ctx.STRING().getText()[1:-1] + '\0'
-            str_bytes = bytearray(text.encode("utf8"))
-            str_type = ir.ArrayType(ir.IntType(8), len(str_bytes))
-            global_str = ir.GlobalVariable(self.module, str_type, name=f".str.{var_name}.{self.function_counter}")
-            global_str.linkage = 'internal'
-            global_str.global_constant = True
-            global_str.initializer = ir.Constant(str_type, str_bytes)
-
+        elif type_str == 'float':
+            llvm_type = ir.DoubleType()
+            if ctx.FLOAT():
+                initializer = ir.Constant(llvm_type, float(ctx.FLOAT().getText()))
+            else:
+                initializer = ir.Constant(llvm_type, 0.0)
+        elif type_str == 'bool':
+            llvm_type = ir.IntType(1)
+            if ctx.boolean_expression():
+                init_val = self.visitBooleanExpression(ctx.boolean_expression(), builder if builder else None)
+                if isinstance(init_val, ir.Constant):
+                    initializer = init_val
+                elif builder:
+                    initializer = init_val
+                else:
+                    print(f"Warning: Non-constant initializer for global boolean '{var_name}'. Defaulting to false.")
+                    initializer = ir.Constant(llvm_type, 0)
+            else:
+                initializer = ir.Constant(llvm_type, 0)
+        elif type_str == 'string':
             llvm_type = ir.IntType(8).as_pointer()
-            initializer = global_str.bitcast(llvm_type)
+            if ctx.STRING():
+                text = ctx.STRING().getText()[1:-1] + '\0'
+                str_bytes = bytearray(text.encode("utf8"))
+                str_arr_type = ir.ArrayType(ir.IntType(8), len(str_bytes))
+                global_str_name = f".str.decl.{var_name}.{self.function_counter}"
+                global_str_literal = ir.GlobalVariable(self.module, str_arr_type, name=global_str_name)
+                global_str_literal.linkage = 'internal'
+                global_str_literal.global_constant = True
+                global_str_literal.initializer = ir.Constant(str_arr_type, str_bytes)
+                initializer = global_str_literal.bitcast(llvm_type)
+            else:
+                initializer = ir.Constant(llvm_type, None)
         else:
-            raise ValueError(f"Unsupported type for variable: {var_name}")
+            raise ValueError(f"Unsupported type keyword '{type_str}' for variable: {var_name}")
 
         if not builder:
+            if var_name in self.symbol_table:
+                raise ValueError(f"Global variable '{var_name}' already declared.")
             global_var = ir.GlobalVariable(self.module, llvm_type, name=var_name)
             global_var.initializer = initializer
             global_var.linkage = 'internal'
             global_var.global_constant = False
             self.symbol_table[var_name] = global_var
         else:
+            if self.current_function is None:
+                raise Exception("Trying to declare a local variable outside a function context.")
+            if var_name in self.local_symbol_table.get(self.current_function, {}):
+                raise ValueError(f"Local variable '{var_name}' already declared in function '{self.current_function}'.")
+
             ptr = builder.alloca(llvm_type, name=var_name)
             builder.store(initializer, ptr)
             self.local_symbol_table[self.current_function][var_name] = ptr
@@ -1077,27 +1105,40 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
         func_name = ctx.ID().getText()
         param_nodes = ctx.parametr_list().children if ctx.parametr_list() else []
         self.current_function = func_name
-        self.local_symbol_table[func_name] = {} 
+
+        if func_name not in self.local_symbol_table:
+            self.local_symbol_table[func_name] = {}
 
         # Pobierz typy i nazwy parametrów
         params = []
         llvm_types = []
         i = 0
         while i < len(param_nodes):
-            if param_nodes[i].getText() in ['int', 'float', 'bool']:
-                typ = param_nodes[i].getText()
-                name = param_nodes[i + 1].getText()
-                if typ == 'int':
-                    llvm_type = ir.IntType(32)
-                elif typ == 'float':
-                    llvm_type = ir.DoubleType()
-                elif typ == 'bool':
-                    llvm_type = ir.IntType(1)
+            if param_nodes[i].getText() in ['int', 'float', 'bool', 'string']:
+                typ_str = param_nodes[i].getText()
+                # Ensure there is a next node for the name
+                if i + 1 < len(param_nodes) and isinstance(param_nodes[i + 1], TerminalNode) and param_nodes[
+                    i + 1].symbol.type == SimpleLangLexer.ID:
+                    name = param_nodes[i + 1].getText()
+                    llvm_type = None
+                    if typ_str == 'int':
+                        llvm_type = ir.IntType(32)
+                    elif typ_str == 'float':
+                        llvm_type = ir.DoubleType()
+                    elif typ_str == 'bool':
+                        llvm_type = ir.IntType(1)
+                    elif typ_str == 'string':
+                        llvm_type = ir.IntType(8).as_pointer()
+                    else:
+                        raise ValueError(f"Unknown param type: {typ_str}")
+
+                    llvm_types.append(llvm_type)
+                    params.append((name, llvm_type))
+                    i += 2
                 else:
-                    raise ValueError(f"Unknown param type: {typ}")
-                llvm_types.append(llvm_type)
-                params.append((name, llvm_type))
-                i += 2
+                    raise SyntaxError(f"Expected parameter name after type '{typ_str}' in function {func_name}")
+            elif param_nodes[i].getText() == ',':
+                i += 1
             else:
                 i += 1
 
@@ -1108,6 +1149,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
             return_type = ir.DoubleType()
         elif return_type_str == 'bool':
             return_type = ir.IntType(1)
+        elif return_type_str == 'string':
+            return_type_str == 'string'
         else:
             raise ValueError(f"Unknown return type: {return_type_str}")
 
@@ -1119,9 +1162,13 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
 
         # Zainicjalizuj parametry w symbol_table
         for i, (name, typ) in enumerate(params):
-            ptr = builder.alloca(typ, name=name)
-            builder.store(func.args[i], ptr)
-            self.symbol_table[name] = ptr
+            if name in self.local_symbol_table[func_name]:
+                raise ValueError(f"Parameter '{name}' redefined in function '{func_name}'")
+            param_val = func.args[i]
+            param_val.name = name
+            ptr = builder.alloca(typ, name=name + ".addr")
+            builder.store(param_val, ptr)
+            self.local_symbol_table[func_name][name] = ptr
 
         # Zbuduj ciało funkcji
         ret_val = self.visitCode_block(ctx.code_block(), builder)
@@ -1134,6 +1181,8 @@ class SimpleLangIRVisitor(SimpleLangVisitor):
                 builder.ret(ir.Constant(ir.DoubleType(), 0.0))
             elif return_type == ir.IntType(1):
                 builder.ret(ir.Constant(ir.IntType(1), 0))
+            elif isinstance(return_type, ir.PointerType):  # For string return
+                builder.ret(ir.Constant(return_type, None))
 
         self.current_function = None  # Resetuj aktualną funkcję
         return func

@@ -62,3 +62,12 @@ while r < max_rows {
     r = r + 1;
 }
 print(sum);
+
+int def;
+def = 69;
+print(def);
+
+bool fed;
+print(fed);
+fed = true;
+print(fed);
