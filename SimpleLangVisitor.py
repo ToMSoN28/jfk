@@ -14,6 +14,16 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SimpleLangParser#struct_definition.
+    def visitStruct_definition(self, ctx:SimpleLangParser.Struct_definitionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#field_declaration.
+    def visitField_declaration(self, ctx:SimpleLangParser.Field_declarationContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SimpleLangParser#statement.
     def visitStatement(self, ctx:SimpleLangParser.StatementContext):
         return self.visitChildren(ctx)
@@ -79,18 +89,28 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#Variable.
-    def visitVariable(self, ctx:SimpleLangParser.VariableContext):
+    # Visit a parse tree produced by SimpleLangParser#TableElemExpr.
+    def visitTableElemExpr(self, ctx:SimpleLangParser.TableElemExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#Number.
-    def visitNumber(self, ctx:SimpleLangParser.NumberContext):
+    # Visit a parse tree produced by SimpleLangParser#StringExpr.
+    def visitStringExpr(self, ctx:SimpleLangParser.StringExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#FuncCallNum.
-    def visitFuncCallNum(self, ctx:SimpleLangParser.FuncCallNumContext):
+    # Visit a parse tree produced by SimpleLangParser#FloatExpr.
+    def visitFloatExpr(self, ctx:SimpleLangParser.FloatExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#MatrixElemExpr.
+    def visitMatrixElemExpr(self, ctx:SimpleLangParser.MatrixElemExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SimpleLangParser#NumberExpr.
+    def visitNumberExpr(self, ctx:SimpleLangParser.NumberExprContext):
         return self.visitChildren(ctx)
 
 
@@ -104,23 +124,23 @@ class SimpleLangVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#Parens.
-    def visitParens(self, ctx:SimpleLangParser.ParensContext):
+    # Visit a parse tree produced by SimpleLangParser#StructMemberAccessExpr.
+    def visitStructMemberAccessExpr(self, ctx:SimpleLangParser.StructMemberAccessExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#FloatNumber.
-    def visitFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
+    # Visit a parse tree produced by SimpleLangParser#ParensExpr.
+    def visitParensExpr(self, ctx:SimpleLangParser.ParensExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#TableElem.
-    def visitTableElem(self, ctx:SimpleLangParser.TableElemContext):
+    # Visit a parse tree produced by SimpleLangParser#VariableExpr.
+    def visitVariableExpr(self, ctx:SimpleLangParser.VariableExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SimpleLangParser#MatrixElem.
-    def visitMatrixElem(self, ctx:SimpleLangParser.MatrixElemContext):
+    # Visit a parse tree produced by SimpleLangParser#FuncCallExpr.
+    def visitFuncCallExpr(self, ctx:SimpleLangParser.FuncCallExprContext):
         return self.visitChildren(ctx)
 
 

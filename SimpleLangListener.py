@@ -17,6 +17,24 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SimpleLangParser#struct_definition.
+    def enterStruct_definition(self, ctx:SimpleLangParser.Struct_definitionContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#struct_definition.
+    def exitStruct_definition(self, ctx:SimpleLangParser.Struct_definitionContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#field_declaration.
+    def enterField_declaration(self, ctx:SimpleLangParser.Field_declarationContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#field_declaration.
+    def exitField_declaration(self, ctx:SimpleLangParser.Field_declarationContext):
+        pass
+
+
     # Enter a parse tree produced by SimpleLangParser#statement.
     def enterStatement(self, ctx:SimpleLangParser.StatementContext):
         pass
@@ -134,30 +152,48 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SimpleLangParser#Variable.
-    def enterVariable(self, ctx:SimpleLangParser.VariableContext):
+    # Enter a parse tree produced by SimpleLangParser#TableElemExpr.
+    def enterTableElemExpr(self, ctx:SimpleLangParser.TableElemExprContext):
         pass
 
-    # Exit a parse tree produced by SimpleLangParser#Variable.
-    def exitVariable(self, ctx:SimpleLangParser.VariableContext):
-        pass
-
-
-    # Enter a parse tree produced by SimpleLangParser#Number.
-    def enterNumber(self, ctx:SimpleLangParser.NumberContext):
-        pass
-
-    # Exit a parse tree produced by SimpleLangParser#Number.
-    def exitNumber(self, ctx:SimpleLangParser.NumberContext):
+    # Exit a parse tree produced by SimpleLangParser#TableElemExpr.
+    def exitTableElemExpr(self, ctx:SimpleLangParser.TableElemExprContext):
         pass
 
 
-    # Enter a parse tree produced by SimpleLangParser#FuncCallNum.
-    def enterFuncCallNum(self, ctx:SimpleLangParser.FuncCallNumContext):
+    # Enter a parse tree produced by SimpleLangParser#StringExpr.
+    def enterStringExpr(self, ctx:SimpleLangParser.StringExprContext):
         pass
 
-    # Exit a parse tree produced by SimpleLangParser#FuncCallNum.
-    def exitFuncCallNum(self, ctx:SimpleLangParser.FuncCallNumContext):
+    # Exit a parse tree produced by SimpleLangParser#StringExpr.
+    def exitStringExpr(self, ctx:SimpleLangParser.StringExprContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#FloatExpr.
+    def enterFloatExpr(self, ctx:SimpleLangParser.FloatExprContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#FloatExpr.
+    def exitFloatExpr(self, ctx:SimpleLangParser.FloatExprContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#MatrixElemExpr.
+    def enterMatrixElemExpr(self, ctx:SimpleLangParser.MatrixElemExprContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#MatrixElemExpr.
+    def exitMatrixElemExpr(self, ctx:SimpleLangParser.MatrixElemExprContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#NumberExpr.
+    def enterNumberExpr(self, ctx:SimpleLangParser.NumberExprContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#NumberExpr.
+    def exitNumberExpr(self, ctx:SimpleLangParser.NumberExprContext):
         pass
 
 
@@ -179,39 +215,39 @@ class SimpleLangListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SimpleLangParser#Parens.
-    def enterParens(self, ctx:SimpleLangParser.ParensContext):
+    # Enter a parse tree produced by SimpleLangParser#StructMemberAccessExpr.
+    def enterStructMemberAccessExpr(self, ctx:SimpleLangParser.StructMemberAccessExprContext):
         pass
 
-    # Exit a parse tree produced by SimpleLangParser#Parens.
-    def exitParens(self, ctx:SimpleLangParser.ParensContext):
-        pass
-
-
-    # Enter a parse tree produced by SimpleLangParser#FloatNumber.
-    def enterFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
-        pass
-
-    # Exit a parse tree produced by SimpleLangParser#FloatNumber.
-    def exitFloatNumber(self, ctx:SimpleLangParser.FloatNumberContext):
+    # Exit a parse tree produced by SimpleLangParser#StructMemberAccessExpr.
+    def exitStructMemberAccessExpr(self, ctx:SimpleLangParser.StructMemberAccessExprContext):
         pass
 
 
-    # Enter a parse tree produced by SimpleLangParser#TableElem.
-    def enterTableElem(self, ctx:SimpleLangParser.TableElemContext):
+    # Enter a parse tree produced by SimpleLangParser#ParensExpr.
+    def enterParensExpr(self, ctx:SimpleLangParser.ParensExprContext):
         pass
 
-    # Exit a parse tree produced by SimpleLangParser#TableElem.
-    def exitTableElem(self, ctx:SimpleLangParser.TableElemContext):
+    # Exit a parse tree produced by SimpleLangParser#ParensExpr.
+    def exitParensExpr(self, ctx:SimpleLangParser.ParensExprContext):
         pass
 
 
-    # Enter a parse tree produced by SimpleLangParser#MatrixElem.
-    def enterMatrixElem(self, ctx:SimpleLangParser.MatrixElemContext):
+    # Enter a parse tree produced by SimpleLangParser#VariableExpr.
+    def enterVariableExpr(self, ctx:SimpleLangParser.VariableExprContext):
         pass
 
-    # Exit a parse tree produced by SimpleLangParser#MatrixElem.
-    def exitMatrixElem(self, ctx:SimpleLangParser.MatrixElemContext):
+    # Exit a parse tree produced by SimpleLangParser#VariableExpr.
+    def exitVariableExpr(self, ctx:SimpleLangParser.VariableExprContext):
+        pass
+
+
+    # Enter a parse tree produced by SimpleLangParser#FuncCallExpr.
+    def enterFuncCallExpr(self, ctx:SimpleLangParser.FuncCallExprContext):
+        pass
+
+    # Exit a parse tree produced by SimpleLangParser#FuncCallExpr.
+    def exitFuncCallExpr(self, ctx:SimpleLangParser.FuncCallExprContext):
         pass
 
 

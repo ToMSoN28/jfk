@@ -1,6 +1,9 @@
 grammar SimpleLang;
 
-program: (function_definition | statement)+;
+program: (function_definition | statement| struct_definition)+;
+
+struct_definition: 'struct' ID '{' field_declaration+ '}' ';' ;
+field_declaration: type ID ';';
 
 statement: variable_declaration
          | assignment
@@ -19,17 +22,19 @@ statement: variable_declaration
 
 if_statement: 'if' boolean_expression code_block ('else' code_block)? ;
 
-variable_declaration: 'int' ID ('=' NUMBER)? ';'
-                    | 'float' ID ('=' FLOAT)? ';'
-                    | 'bool' ID ('=' boolean_expression)? ';'
-                    | 'string' ID ('=' STRING)? ';'
+variable_declaration: 'int' var_name=ID ('=' NUMBER)? ';'
+                    | 'float' var_name=ID ('=' FLOAT)? ';'
+                    | 'bool' var_name=ID ('=' boolean_expression)? ';'
+                    | 'string' var_name=ID ('=' STRING)? ';'
+                    | type_name=ID var_name=ID ';'
                     ;
 
 table_declaration: type '[' NUMBER ']' ID ';' ;
 
-assignment: ID '=' expression ';' 
-          | ID '=' boolean_expression ';' 
-          | ID '=' STRING ';'
+assignment: struct_var=ID '.' field_name=ID '=' expression ';'
+          |var_name=ID '=' expression ';'
+          | var_name=ID '=' boolean_expression ';'
+          | var_name=ID '=' STRING ';'
           ;
 
 table_assignment: ID '=' '[' expression (',' expression)* ']' ';'                  
@@ -50,13 +55,15 @@ input_statement: ID '=' 'input' '(' ')' ';' ;
 
 expression: expression op=('*'|'/') expression # MulDiv
           | expression op=('+'|'-') expression # AddSub
-          | '(' expression ')'                  # Parens
-          | NUMBER                               # Number
-          | FLOAT                                # FloatNumber
-          | ID                                   # Variable
-          | func_call                            # FuncCallNum
-          | ID '[' expression ']'                # TableElem
-          | ID '[' expression ']' '[' expression ']' # MatrixElem
+          | '(' expression ')'                             # ParensExpr  // Changed label
+          | NUMBER                                         # NumberExpr  // Changed label
+          | FLOAT                                          # FloatExpr   // Changed label
+          | STRING                                         # StringExpr  // Changed label
+          | ID                                             # VariableExpr// Changed label
+          | func_call                                      # FuncCallExpr// Changed label
+          | ID '[' expression ']'                          # TableElemExpr// Changed label
+          | ID '[' expression ']' '[' expression ']'       # MatrixElemExpr// Changed label
+          | expression '.' ID                              # StructMemberAccessExpr // Changed label
           ;
 
 boolean_expression: boolean_expression op=('AND' | 'OR' | 'XOR') boolean_expression # BoolBinaryOp
@@ -86,10 +93,12 @@ argument_list: (expression | boolean_expression) (',' (expression | boolean_expr
 
 return_statement: 'return' (expression | boolean_expression)? ';' ;
 
-type: 'int' | 'float' | 'bool' | 'string';
+type: 'int' | 'float' | 'bool' | 'string' | ID;
 STRING: '"' (~["\\] | '\\' .)* '"';
 BOOLEAN: 'true' | 'false';
 ID: [a-zA-Z][a-zA-Z_0-9]*;
 NUMBER: [0-9]+;
 FLOAT: [0-9]+ '.' [0-9]+;
 WS: [ \t\r\n]+ -> skip;
+SINGLE_LINE_COMMENT: '//' ~[\r\n]* -> skip;
+MULTI_LINE_COMMENT: '/*' .*? '*/' -> skip;
